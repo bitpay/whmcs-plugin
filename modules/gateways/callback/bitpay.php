@@ -24,7 +24,7 @@ if (is_string($response))
 }
 
 
-if ($response['status']=="confirmed" || $response['status']=="complete") {
+if ($response['status']=="confirmed") {
 	$invoiceid = $response['posData'];
 	$invoiceid = checkCbInvoiceID($invoiceid,$GATEWAY["name"]); # Checks invoice ID is a valid invoice number or ends processing
 	
