@@ -8,18 +8,21 @@ include("../../../includes/invoicefunctions.php");
 
 require_once('../bit-pay/bp_lib.php');
 
+bpLog(file_get_contents('php://input'));
+
 $gatewaymodule = "bitpay";
 $GATEWAY = getGatewayVariables($gatewaymodule);
 if (!$GATEWAY["type"]) 
 {
 	logTransaction($GATEWAY["name"],$_POST,'Not activated');
-	die("Module Not Activated"); # Checks gateway module is active before accepting callback
+	bpLog('bitpay module not activated');
+	die("Bitpay module not activated");
 }
 
 $response = bpVerifyNotification($GATEWAY['apiKey']);
 if (is_string($response))
 {
-	logTransaction($GATEWAY["name"],$_POST,$response);
+	logTransaction($GATEWAY["name"],$_POST,$response);	
 	die($response);
 }
 
@@ -36,5 +39,6 @@ if ($response['status']=="confirmed" || $response['status']=="complete") {
 	$amount = ''; // left blank, this will auto-fill as the full balance
     addInvoicePayment($invoiceid,$transid,$amount,$fee,$gatewaymodule); # Apply Payment to Invoice
 	logTransaction($GATEWAY["name"],$response,"Successful"); 
+	bpLog('invoice '.$invoiceid.' credited');
 }
 ?>
