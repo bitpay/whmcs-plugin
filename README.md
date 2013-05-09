@@ -52,5 +52,5 @@ Change Log
 Version 1
 	- Initial version, tested against WHMCS 4.5.2
 Version 2 (9/'12)
-	- Updated to use new API key instead of SSL files.  Tested against WHMCS 4.5.2
+	- Updated to use new API key instead of SSL files.  Tested against WHMCS 5.2.3.
 
