@@ -1,10 +1,12 @@
 <?php
 
+require_once 'bit-pay/bp_lib.php';
+
 function bitpay_config() {
     $configarray = array(
-     "FriendlyName" => array("Type" => "System", "Value"=>"Bit-pay"),
-	 'apiKey' => array('FriendlyName' => 'API Key from your bitpay.com account.', 'Type' => 'text'),
-	 'transactionSpeed' => array('FriendlyName' => 'Transaction Speed', 'Type' => 'dropdown', 'Options' => 'low,medium,high'),	 
+     	"FriendlyName" => array("Type" => "System", "Value"=>"Bit-pay"),
+	 	'apiKey' => array('FriendlyName' => 'API Key from your bitpay.com account.', 'Type' => 'text'),
+	 	'transactionSpeed' => array('FriendlyName' => 'Transaction Speed', 'Type' => 'dropdown', 'Options' => 'low,medium,high'),	 
     );
 
 	return $configarray;
@@ -13,48 +15,32 @@ function bitpay_config() {
 
 
 function bitpay_link($params) {
-	# Invoice Variables
-	$invoiceid = $params['invoiceid'];
+	// Check if "start" checked OR if adding funds OR completing an order, no button need to be shown in these situations.
+	if (isset($_POST['start']) || (isset($_GET['a']) && $_GET['a'] == 'complete') || (isset($_GET['action']) && $_GET['action'] == 'addfunds' && isset($_POST['paymentmethod']) && $_POST['paymentmethod'] == 'paysafecard')) {
 
-	# Client Variables
-	$firstname = $params['clientdetails']['firstname'];
-	$lastname = $params['clientdetails']['lastname'];
-	$email = $params['clientdetails']['email'];
-	$address1 = $params['clientdetails']['address1'];
-	$address2 = $params['clientdetails']['address2'];
-	$city = $params['clientdetails']['city'];
-	$state = $params['clientdetails']['state'];
-	$postcode = $params['clientdetails']['postcode'];
-	$country = $params['clientdetails']['country'];
-	$phone = $params['clientdetails']['phonenumber'];
+		$options['notificationURL'] = $params['systemurl'].'/modules/gateways/bit-pay/callback.php'; //Callback file.
+		$options['redirectURL'] = $params['returnurl']; //Return URl, given by WHMCS.
+		$options['apiKey'] = $params['apiKey']; //API key.
+		$options['transactionSpeed'] = $params['transactionSpeed']; //Transaction speed.
+		$options['currency'] = $params['currency']; //Currency, given by WHMCS.
 
+		$invoice = bpCreateInvoice($invoiceId, $price, $invoiceId, $options); 
 
-	# System Variables
+		if (isset($invoice['error']))
+		{	
+			logTransaction($params['paymentmethod'], $invoice['error'], 'Error');
+			return "<p>Bitpay invoice error, please contact our support.</p>";
+		}
+		else{
 
-	$systemurl = $params['systemurl'];
+			$options['status'] = 'creating bp invoice with whmcs invoice '.$invoiceId.' '.$price;
+			logTransaction($params['paymentmethod'], $options, 'Transaction opened');
 
-	$post = array(
-		'invoiceId' => $invoiceid,
-		'systemURL' => $systemurl,
-		'buyerName' => "$firstname $lastname",
-		'buyerAddress1' => $address1,
-		'buyerAddress2' => $address2,
-		'buyerCity' => $city,
-		'buyerState' => $state,
-		'buyerZip' => $postcode,
-		'buyerEmail' => $email,
-		'buyerPhone' => $phone,
-		);
-	
+			header("Location: ".$invoice['url']); 
+			exit();
+		}
 
-	$form = '<form action="'.$systemurl.'/modules/gateways/bit-pay/createinvoice.php" method="POST">';
-
-	foreach($post as $key => $value)
-		$form.= '<input type="hidden" name="'.$key.'" value = "'.$value.'" />';
-
-	$form.='<input type="submit" value="'.$params['langpaynow'].'" />';
-	$form.='</form>';
-
-	return $form;
-
+ 	} else {
+        return '<form action="" method="POST"><input type="submit" name="start" value="' . $params['langpaynow'] . '" /></form>';
+    }
 }
