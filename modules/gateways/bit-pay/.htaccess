@@ -1,7 +1,4 @@
+<Files bq_*>
 Order deny,allow
 Deny from all
-
-<Files createinvoice.php>
-order allow,deny
-allow from all
 </Files>
