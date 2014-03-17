@@ -1,0 +1,4 @@
+<Files bq_*>
+Order deny,allow
+Deny from all
+</Files>
