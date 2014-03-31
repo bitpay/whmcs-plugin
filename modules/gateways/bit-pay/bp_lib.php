@@ -2,8 +2,7 @@
 
 require_once 'bp_options.php';
 
-function bpLog($contents)
-{
+function bpLog($contents) {
 	$file = dirname(__FILE__).'/bplog.txt';
 	file_put_contents($file, date('m-d H:i:s').": ", FILE_APPEND);
 	
@@ -32,6 +31,7 @@ function bpCurl($url, $apiKey, $post = false) {
 		'Content-Type: application/json',
 		"Content-Length: $length",
 		"Authorization: Basic $uname",
+		'X-BitPay-Plugin-Info: whmcs3',
 		);
 
 	curl_setopt($curl, CURLOPT_PORT, 443);
@@ -63,7 +63,7 @@ function bpCurl($url, $apiKey, $post = false) {
 // changed in $options.
 //
 // $posData: this field is included in status updates or requests to get an invoice.  It is intended to be used by
-// the merchant to uniquely identify an order associated with an invoice in their system.  Aside from that, Bit-Pay does
+// the merchant to uniquely identify an order associated with an invoice in their system.  Aside from that, BitPay does
 // not use the data in this field.  The data in this field can be anything that is meaningful to the merchant.
 //
 // $options keys can include any of: 
@@ -136,6 +136,5 @@ function bpGetInvoice($invoiceId, $apiKey=false) {
 	$response['posData'] = json_decode($response['posData'], true);
 	return $response;	
 }
-
 
 ?>
