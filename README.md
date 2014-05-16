@@ -55,3 +55,6 @@ Version 2 (9/'12)
 
 Version 3 (03/14)
 - Added new HTTP header for version tracking.
+
+Version 4 (05/14)
+- Fix to use server error handling.

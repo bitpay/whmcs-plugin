@@ -3,15 +3,7 @@
 require_once 'bp_options.php';
 
 function bpLog($contents) {
-	$file = dirname(__FILE__).'/bplog.txt';
-	file_put_contents($file, date('m-d H:i:s').": ", FILE_APPEND);
-	
-	if (is_array($contents))
-		$contents = var_export($contents, true);	
-	else if (is_object($contents))
-		$contents = json_encode($contents);
-		
-	file_put_contents($file, $contents."\n", FILE_APPEND);			
+	error_log($contents);			
 }
 
 function bpCurl($url, $apiKey, $post = false) {

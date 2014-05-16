@@ -62,8 +62,6 @@ $options['redirectURL'] = $_POST['systemURL'];
 $options['apiKey'] = $GATEWAY['apiKey'];
 $options['transactionSpeed'] = $GATEWAY['transactionSpeed'];
 $options['currency'] = $currency;
-bpLog('creating bp invoice with whmcs invoice '.$invoiceId.' '.$price);
-bpLog($options);
 $invoice = bpCreateInvoice($invoiceId, $price, $invoiceId, $options);
 
 if (isset($invoice['error']))
