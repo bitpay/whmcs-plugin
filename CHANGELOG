@@ -1,0 +1,11 @@
+1
+	* Initial version, tested against WHMCS 4.5.2
+
+2 (9/'12)
+	* Updated to use new API key instead of SSL files.  Tested against WHMCS 5.2.3.
+
+3 (03/14)
+	* Added new HTTP header for version tracking.
+
+4 (05/14)
+	* Fix to use server error handling.
