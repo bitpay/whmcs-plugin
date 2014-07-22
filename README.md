@@ -65,7 +65,7 @@ manually.
 
 # Contribute
 
-To contribute to this project, please for and submit a pull request.
+To contribute to this project, please fork and submit a pull request.
 
 # License
 
