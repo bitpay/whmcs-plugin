@@ -67,4 +67,5 @@ if (is_string($response) || is_null($response)) {
         addInvoicePayment($invoiceid, $transid, $amount, $fee, $gatewaymodule); # Apply Payment to Invoice
         logTransaction($GATEWAY["name"], $response, "The payment has been received, and the transaction has been confirmed on the bitcoin network. This will be updated when the transaction has been completed.");
         break;
+    }
 }

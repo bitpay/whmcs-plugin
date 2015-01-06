@@ -70,13 +70,8 @@ function bpCurl($url, $apiKey, $post = false)
     curl_setopt($curl, CURLOPT_FORBID_REUSE, 1);
     curl_setopt($curl, CURLOPT_FRESH_CONNECT, 1);
 
-    try {
-        $responseString = curl_exec($curl);
-    } catch (Exception $e) {
-        throw $e;
-    }
+    $responseString = curl_exec($curl);
     
-
     if ($responseString == false) {
         $response = array('error' => curl_error($curl));
     } else {
@@ -139,12 +134,8 @@ function bpCreateInvoice($orderId, $price, $posData, $options = array())
         }
     }
     $post     = json_encode($post);
-    try {
-        $response = bpCurl('https://'.$network.'bitpay.com/api/invoice/', $options['apiKey'], $post);
-    } catch (Exception $e) {
-        bpLog($e);
-    }
-    
+
+    $response = bpCurl('https://'.$network.'bitpay.com/api/invoice/', $options['apiKey'], $post);
 
     return $response;
 }
@@ -212,11 +203,9 @@ function bpGetInvoice($invoiceId, $apiKey = false, $network)
     } else {
         $network = ($network == 'test') ? 'test.' : '';
     }
-    try {
-        $response = bpCurl('https://'.$network.'bitpay.com/api/invoice/'.$invoiceId, $apiKey);
-    } catch (Exception $e) {
-        bpLog($e);
-    }
+
+    $response = bpCurl('https://'.$network.'bitpay.com/api/invoice/'.$invoiceId, $apiKey);
+
     if (is_string($response)) {
         return $response; // error
     }
