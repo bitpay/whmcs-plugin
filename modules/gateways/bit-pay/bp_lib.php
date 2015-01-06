@@ -70,7 +70,12 @@ function bpCurl($url, $apiKey, $post = false)
     curl_setopt($curl, CURLOPT_FORBID_REUSE, 1);
     curl_setopt($curl, CURLOPT_FRESH_CONNECT, 1);
 
-    $responseString = curl_exec($curl);
+    try {
+        $responseString = curl_exec($curl);
+    } catch (Exception $e) {
+        throw $e;
+    }
+    
 
     if ($responseString == false) {
         $response = array('error' => curl_error($curl));
@@ -134,7 +139,12 @@ function bpCreateInvoice($orderId, $price, $posData, $options = array())
         }
     }
     $post     = json_encode($post);
-    $response = bpCurl('https://'.$network.'bitpay.com/api/invoice/', $options['apiKey'], $post);
+    try {
+        $response = bpCurl('https://'.$network.'bitpay.com/api/invoice/', $options['apiKey'], $post);
+    } catch (Exception $e) {
+        bpLog($e);
+    }
+    
 
     return $response;
 }

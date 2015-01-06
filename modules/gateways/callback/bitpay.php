@@ -30,7 +30,7 @@ include '../../../includes/gatewayfunctions.php';
 include '../../../includes/invoicefunctions.php';
 
 require_once '../bit-pay/bp_lib.php';
-error_log("Callback has been hit!");
+
 $gatewaymodule = "bitpay";
 $GATEWAY       = getGatewayVariables($gatewaymodule);
 if (!$GATEWAY["type"]) {
