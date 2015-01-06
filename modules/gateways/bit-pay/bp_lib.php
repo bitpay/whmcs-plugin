@@ -115,7 +115,6 @@ function bpCreateInvoice($orderId, $price, $posData, $options = array())
     global $bpOptions;
 
     $options = array_merge($bpOptions, $options);    // $options override any options found in bp_options.php
-    die($options);
     $options['posData'] = '{"posData": "' . $posData . '"';
     if ($bpOptions['verifyPos']) { // if desired, a hash of the POS data is included to verify source in the callback
         $options['posData'].= ', "hash": "' . crypt($posData, $options['apiKey']).'"';
