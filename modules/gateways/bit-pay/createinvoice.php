@@ -91,11 +91,11 @@ $options['apiKey']           = $GATEWAY['apiKey'];
 $options['transactionSpeed'] = $GATEWAY['transactionSpeed'];
 $options['currency']         = $currency;
 $options['network']          = $GATEWAY['network'];
-$invoice                     = bpCreateInvoice($invoiceId, $price, $invoiceId, $options);
-
-if (isset($invoice['error'])) {
-    bpLog($invoice['error']);
-    die("bitpay invoice error");
-} else {
-    header("Location: ".$invoice['url']);
+try {
+    $invoice = bpCreateInvoice($invoiceId, $price, $invoiceId, $options);
+} catch (Exception $e) {
+    bpLog(var_export($e, true);
+    die("bitpay invoice error: ".$e);
 }
+
+header("Location: ".$invoice['url']);
