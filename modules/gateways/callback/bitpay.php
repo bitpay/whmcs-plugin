@@ -30,7 +30,7 @@ include '../../../includes/gatewayfunctions.php';
 include '../../../includes/invoicefunctions.php';
 
 require_once '../bit-pay/bp_lib.php';
-
+error_log("Callback has been hit!");
 $gatewaymodule = "bitpay";
 $GATEWAY       = getGatewayVariables($gatewaymodule);
 if (!$GATEWAY["type"]) {
@@ -39,7 +39,7 @@ if (!$GATEWAY["type"]) {
     die("Bitpay module not activated");
 }
 
-$response = bpVerifyNotification($GATEWAY['apiKey']);
+$response = bpVerifyNotification($GATEWAY['apiKey'], $GATEWAY['network']);
 if (is_string($response)) {
     logTransaction($GATEWAY["name"], $_POST, $response);
     die($response);
