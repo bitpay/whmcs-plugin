@@ -212,8 +212,11 @@ function bpGetInvoice($invoiceId, $apiKey = false, $network)
     } else {
         $network = ($network == 'test') ? 'test.' : '';
     }
-    
-    $response = bpCurl('https://'.$network.'bitpay.com/api/invoice/'.$invoiceId, $apiKey);
+    try {
+        $response = bpCurl('https://'.$network.'bitpay.com/api/invoice/'.$invoiceId, $apiKey);
+    } catch (Exception $e) {
+        bpLog($e);
+    }
     if (is_string($response)) {
         return $response; // error
     }

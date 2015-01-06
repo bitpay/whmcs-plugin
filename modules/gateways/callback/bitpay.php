@@ -44,6 +44,14 @@ if (is_string($response)) {
     logTransaction($GATEWAY["name"], $_POST, $response);
     die($response);
 }
+if ($response['status'] == "paid") {
+    $invoiceid = $response['posData'];
+    # Checks invoice ID is a valid invoice number or ends processing
+    $invoiceid = checkCbInvoiceID($invoiceid, $GATEWAY["name"]);
+    $transid = $response['id'];
+    checkCbTransID($transid); # Checks transaction number isn't already in the database and ends processing if it does
+    logTransaction($GATEWAY["name"], $response, "Unconfirmed Payment has been made");
+}
 
 if ($response['status']=="confirmed" || $response['status']=="complete") {
     $invoiceid = $response['posData'];
