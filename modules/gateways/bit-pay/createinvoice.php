@@ -94,8 +94,8 @@ $options['network']          = $GATEWAY['network'];
 $invoice                     = bpCreateInvoice($invoiceId, $price, $invoiceId, $options);
 
 if (isset($invoice['error'])) {
-    bpLog($invoice['error']);
-    die("bitpay invoice error: ".$invoice['error']);
+    bpLog(var_dump($invoice['error']));
+    die("bitpay invoice error: ".$invoice['error']['message']);
 } else {
     header("Location: ".$invoice['url']);
 }
