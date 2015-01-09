@@ -90,11 +90,12 @@ $options['redirectURL']      = $_POST['systemURL'];
 $options['apiKey']           = $GATEWAY['apiKey'];
 $options['transactionSpeed'] = $GATEWAY['transactionSpeed'];
 $options['currency']         = $currency;
+$options['network']          = $GATEWAY['network'];
 $invoice                     = bpCreateInvoice($invoiceId, $price, $invoiceId, $options);
 
 if (isset($invoice['error'])) {
-    bpLog($invoice['error']);
-    die("bitpay invoice error");
+    bpLog(var_dump($invoice['error']));
+    die("bitpay invoice error: ".$invoice['error']['message']);
 } else {
     header("Location: ".$invoice['url']);
 }

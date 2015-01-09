@@ -37,6 +37,11 @@ function bitpay_config()
             'FriendlyName' => 'API Key from your bitpay.com account.',
             'Type'         => 'text'
         ),
+        'network' => array(
+          'FriendlyName' => 'Select if API key is from bitpay.com or test.bitpay.com.',
+          'Type'         => 'dropdown',
+          'Options'      => 'live,test',
+        ),
         'transactionSpeed' => array(
             'FriendlyName' => 'Transaction Speed',
             'Type'         => 'dropdown',

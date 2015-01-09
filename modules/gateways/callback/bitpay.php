@@ -39,13 +39,12 @@ if (!$GATEWAY["type"]) {
     die("Bitpay module not activated");
 }
 
-$response = bpVerifyNotification($GATEWAY['apiKey']);
-if (is_string($response)) {
+$response = bpVerifyNotification($GATEWAY['apiKey'], $GATEWAY['network']);
+
+if (is_string($response) || is_null($response)) {
     logTransaction($GATEWAY["name"], $_POST, $response);
     die($response);
-}
-
-if ($response['status']=="confirmed" || $response['status']=="complete") {
+} else {
     $invoiceid = $response['posData'];
     # Checks invoice ID is a valid invoice number or ends processing
     $invoiceid = checkCbInvoiceID($invoiceid, $GATEWAY["name"]);
@@ -56,6 +55,17 @@ if ($response['status']=="confirmed" || $response['status']=="complete") {
     # Successful
     $fee = 0;
     $amount = ''; // left blank, this will auto-fill as the full balance
-    addInvoicePayment($invoiceid, $transid, $amount, $fee, $gatewaymodule); # Apply Payment to Invoice
-    logTransaction($GATEWAY["name"], $response, "Successful");
+    switch ($response['status']) {
+    case "paid":
+        logTransaction($GATEWAY["name"], $response, "The payment has been received, but the transaction has not been confirmed on the bitcoin network. This will be updated when the transaction has been confirmed.");
+        break;
+    case "confirmed":
+        addInvoicePayment($invoiceid, $transid, $amount, $fee, $gatewaymodule); # Apply Payment to Invoice
+        logTransaction($GATEWAY["name"], $response, "The payment has been received, and the transaction has been confirmed on the bitcoin network. This will be updated when the transaction has been completed.");
+        break;
+    case "complete":
+        addInvoicePayment($invoiceid, $transid, $amount, $fee, $gatewaymodule); # Apply Payment to Invoice
+        logTransaction($GATEWAY["name"], $response, "The transaction is now complete.");
+        break;
+    }
 }
