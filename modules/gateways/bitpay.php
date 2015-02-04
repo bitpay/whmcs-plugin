@@ -2,7 +2,7 @@
 /**
  * The MIT License (MIT)
  *
- * Copyright (c) 2011-2014 BitPay
+ * Copyright (c) 2011-2015 BitPay
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -24,6 +24,8 @@
  */
 
 /**
+ * Returns configuration options array.
+ *
  * @return array
  */
 function bitpay_config()
@@ -53,16 +55,21 @@ function bitpay_config()
 }
 
 /**
- * @param array $params
+ * Returns html form.
  *
+ * @param  array  $params
  * @return string
  */
 function bitpay_link($params)
 {
-    # Invoice Variables
+    if (false === isset($params) || true === empty($params)) {
+        die('[ERROR] In modules/gateways/bitpay.php::bitpay_link() function: Missing or invalid $params data.');
+    }
+
+    // Invoice Variables
     $invoiceid = $params['invoiceid'];
 
-    # Client Variables
+    // Client Variables
     $firstname = $params['clientdetails']['firstname'];
     $lastname  = $params['clientdetails']['lastname'];
     $email     = $params['clientdetails']['email'];
@@ -74,14 +81,13 @@ function bitpay_link($params)
     $country   = $params['clientdetails']['country'];
     $phone     = $params['clientdetails']['phonenumber'];
 
-    # System Variables
-
+    // System Variables
     $systemurl = $params['systemurl'];
 
     $post = array(
         'invoiceId'     => $invoiceid,
         'systemURL'     => $systemurl,
-        'buyerName'     => "$firstname $lastname",
+        'buyerName'     => $firstname . ' ' . $lastname,
         'buyerAddress1' => $address1,
         'buyerAddress2' => $address2,
         'buyerCity'     => $city,
@@ -91,14 +97,14 @@ function bitpay_link($params)
         'buyerPhone'    => $phone,
     );
 
-    $form = '<form action="'.$systemurl.'/modules/gateways/bit-pay/createinvoice.php" method="POST">';
+    $form = '<form action="' . $systemurl . '/modules/gateways/bit-pay/createinvoice.php" method="POST">';
 
     foreach ($post as $key => $value) {
-        $form.= '<input type="hidden" name="'.$key.'" value = "'.$value.'" />';
+        $form .= '<input type="hidden" name="' . $key . '" value = "' . $value . '" />';
     }
 
-    $form.='<input type="submit" value="'.$params['langpaynow'].'" />';
-    $form.='</form>';
+    $form .= '<input type="submit" value="' . $params['langpaynow'] . '" />';
+    $form .= '</form>';
 
     return $form;
 }
