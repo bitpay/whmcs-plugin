@@ -2,7 +2,7 @@
 /**
  * The MIT License (MIT)
  *
- * Copyright (c) 2011-2014 BitPay
+ * Copyright (c) 2011-2015 BitPay
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -27,9 +27,11 @@ include '../../../dbconnect.php';
 include '../../../includes/functions.php';
 include '../../../includes/gatewayfunctions.php';
 include '../../../includes/invoicefunctions.php';
+
 require 'bp_lib.php';
 
-$gatewaymodule = "bitpay";
+$gatewaymodule = 'bitpay';
+
 $GATEWAY = getGatewayVariables($gatewaymodule);
 
 // get invoice
@@ -39,8 +41,8 @@ $result    = mysql_query("SELECT tblinvoices.total, tblinvoices.status, tblcurre
 $data      = mysql_fetch_assoc($result);
 
 if (!$data) {
-    bpLog('no invoice found for invoice id'.$invoiceId);
-    die("Invalid invoice");
+    bpLog('[ERROR] In modules/gateways/bitpay/createinvoice.php: No invoice found for invoice id #' . $invoiceId);
+    die('[ERROR] In modules/gateways/bitpay/createinvoice.php: Invalid invoice id #' . $invoiceId);
 }
 
 $price    = $data['total'];
@@ -48,8 +50,8 @@ $currency = $data['code'];
 $status   = $data['status'];
 
 if ($status != 'Unpaid') {
-    bpLog("Invoice status must be Unpaid.  Status: ".$status);
-    die('bad invoice status');
+    bpLog('[ERROR] In modules/gateways/bitpay/createinvoice.php: Invoice status must be Unpaid.  Status: ' . $status);
+    die('[ERROR] In modules/gateways/bitpay/createinvoice.php: Bad invoice status of ' . $status);
 }
 
 // if convert-to option is set (gateway setting), then convert to requested currency
@@ -57,6 +59,7 @@ $convertTo = false;
 $query     = "SELECT value from tblpaymentgateways where `gateway` = '$gatewaymodule' and `setting` = 'convertto'";
 $result    = mysql_query($query);
 $data      = mysql_fetch_assoc($result);
+
 if ($data) {
     $convertTo = $data['value'];
 }
@@ -66,15 +69,18 @@ if ($convertTo) {
     $query           = "SELECT rate FROM tblcurrencies where `code` = '$currency'";
     $result          = mysql_query($query);
     $currentCurrency = mysql_fetch_assoc($result);
+
     if (!$currentCurrency) {
-        bpLog('invalid invoice currency '.$currency);
-        die("Invalid invoice currency");
+        bpLog('[ERROR] In modules/gateways/bitpay/createinvoice.php: Invalid invoice currency of ' . $currency);
+        die('[ERROR] In modules/gateways/bitpay/createinvoice.php: Invalid invoice currency of ' . $currency);
     }
+
     $result            = mysql_query("SELECT code, rate FROM tblcurrencies where `id` = $convertTo");
     $convertToCurrency = mysql_fetch_assoc($result);
+
     if (!$convertToCurrency) {
-        bpLog('invalid convertTo currency '.$convertTo);
-        die("Invalid convertTo currency");
+        bpLog('[ERROR] In modules/gateways/bitpay/createinvoice.php: Invalid convertTo currency of ' . $convertTo);
+        die('[ERROR] In modules/gateways/bitpay/createinvoice.php: Invalid convertTo currency of ' . $convertTo);
     }
 
     $currency = $convertToCurrency['code'];
@@ -83,19 +89,22 @@ if ($convertTo) {
 
 // create invoice
 $options = $_POST;
+
 unset($options['invoiceId']);
 unset($options['systemURL']);
+
 $options['notificationURL']  = $_POST['systemURL'].'/modules/gateways/callback/bitpay.php';
 $options['redirectURL']      = $_POST['systemURL'];
 $options['apiKey']           = $GATEWAY['apiKey'];
 $options['transactionSpeed'] = $GATEWAY['transactionSpeed'];
 $options['currency']         = $currency;
 $options['network']          = $GATEWAY['network'];
+
 $invoice                     = bpCreateInvoice($invoiceId, $price, $invoiceId, $options);
 
 if (isset($invoice['error'])) {
-    bpLog(var_dump($invoice['error']));
-    die("bitpay invoice error: ".$invoice['error']['message']);
+    bpLog('[ERROR] In modules/gateways/bitpay/createinvoice.php: Invoice error: ' . var_export($invoice['error'], true));
+    die('[ERROR] In modules/gateways/bitpay/createinvoice.php: Invoice error: ' . var_export($invoice['error']['message'], true));
 } else {
-    header("Location: ".$invoice['url']);
+    header('Location: ' . $invoice['url']);
 }
