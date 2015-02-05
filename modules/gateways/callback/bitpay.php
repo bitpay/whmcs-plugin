@@ -2,7 +2,7 @@
 /**
  * The MIT License (MIT)
  *
- * Copyright (c) 2011-2014 BitPay
+ * Copyright (c) 2011-2015 BitPay
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -23,7 +23,7 @@
  * THE SOFTWARE.
  */
 
-# Required File Includes
+// Required File Includes
 include '../../../dbconnect.php';
 include '../../../includes/functions.php';
 include '../../../includes/gatewayfunctions.php';
@@ -31,41 +31,58 @@ include '../../../includes/invoicefunctions.php';
 
 require_once '../bit-pay/bp_lib.php';
 
-$gatewaymodule = "bitpay";
+$gatewaymodule = 'bitpay';
 $GATEWAY       = getGatewayVariables($gatewaymodule);
-if (!$GATEWAY["type"]) {
-    logTransaction($GATEWAY["name"], $_POST, 'Not activated');
-    bpLog('bitpay module not activated');
-    die("Bitpay module not activated");
+
+if (!$GATEWAY['type']) {
+    logTransaction($GATEWAY['name'], $_POST, 'Not activated');
+    bpLog('[ERROR] In modules/gateways/callback/bitpay.php: bitpay module not activated');
+    die('[ERROR] In modules/gateways/callback/bitpay.php: Bitpay module not activated.');
 }
 
 $response = bpVerifyNotification($GATEWAY['apiKey'], $GATEWAY['network']);
 
-if (is_string($response) || is_null($response)) {
-    logTransaction($GATEWAY["name"], $_POST, $response);
-    die($response);
+if (true === is_string($response) || true === empty($response)) {
+    logTransaction($GATEWAY['name'], $_POST, $response);
+    die('[ERROR] In modules/gateways/callback/bitpay.php: Invalid response received: ' . $response);
 } else {
     $invoiceid = $response['posData'];
-    # Checks invoice ID is a valid invoice number or ends processing
-    $invoiceid = checkCbInvoiceID($invoiceid, $GATEWAY["name"]);
+
+    // Checks invoice ID is a valid invoice number or ends processing
+    $invoiceid = checkCbInvoiceID($invoiceid, $GATEWAY['name']);
 
     $transid = $response['id'];
-    checkCbTransID($transid); # Checks transaction number isn't already in the database and ends processing if it does
 
-    # Successful
+    // Checks transaction number isn't already in the database and ends processing if it does
+    checkCbTransID($transid);
+
+    // Successful
     $fee = 0;
-    $amount = ''; // left blank, this will auto-fill as the full balance
+
+    // left blank, this will auto-fill as the full balance
+    $amount = '';
+
     switch ($response['status']) {
-    case "paid":
-        logTransaction($GATEWAY["name"], $response, "The payment has been received, but the transaction has not been confirmed on the bitcoin network. This will be updated when the transaction has been confirmed.");
-        break;
-    case "confirmed":
-        addInvoicePayment($invoiceid, $transid, $amount, $fee, $gatewaymodule); # Apply Payment to Invoice
-        logTransaction($GATEWAY["name"], $response, "The payment has been received, and the transaction has been confirmed on the bitcoin network. This will be updated when the transaction has been completed.");
-        break;
-    case "complete":
-        addInvoicePayment($invoiceid, $transid, $amount, $fee, $gatewaymodule); # Apply Payment to Invoice
-        logTransaction($GATEWAY["name"], $response, "The transaction is now complete.");
-        break;
+        case 'paid':
+            // New payment, not confirmed
+            logTransaction($GATEWAY['name'], $response, 'The payment has been received, but the transaction has not been confirmed on the bitcoin network. This will be updated when the transaction has been confirmed.');
+            break;
+        case 'confirmed':
+            // Apply Payment to Invoice
+            addInvoicePayment($invoiceid, $transid, $amount, $fee, $gatewaymodule);
+            logTransaction($GATEWAY['name'], $response, 'The payment has been received, and the transaction has been confirmed on the bitcoin network. This will be updated when the transaction has been completed.');
+            break;
+        case 'complete':
+            // Apply Payment to Invoice
+            addInvoicePayment($invoiceid, $transid, $amount, $fee, $gatewaymodule);
+            logTransaction($GATEWAY['name'], $response, 'The transaction is now complete.');
+            break;
+        case 'expired':
+        case 'invalid':
+            // Bad payment transaction
+            logTransaction($GATEWAY['name'], $response, 'The transaction is invalid. Do not process this order!');
+            break;
+        default:
+            logTransaction($GATEWAY['name'], $response, 'Unknown response received.');
     }
 }
