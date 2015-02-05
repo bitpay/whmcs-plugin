@@ -2,7 +2,7 @@
 /**
  * The MIT License (MIT)
  *
- * Copyright (c) 2011-2014 BitPay
+ * Copyright (c) 2011-2015 BitPay
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -34,10 +34,9 @@ function bpLog($contents)
 }
 
 /**
- * @param string $url
- * @param string $apiKey
- * @param string $post
- *
+ * @param  string      $url
+ * @param  string      $apiKey
+ * @param  bool|string $post
  * @return array
  */
 function bpCurl($url, $apiKey, $post = false)
@@ -53,10 +52,11 @@ function bpCurl($url, $apiKey, $post = false)
     }
 
     $uname  = base64_encode($apiKey);
+
     $header = array(
         'Content-Type: application/json',
-        "Content-Length: $length",
-        "Authorization: Basic $uname",
+        'Content-Length: ' . $length,
+        'Authorization: Basic ' . $uname,
         'X-BitPay-Plugin-Info: whmcs3',
     );
 
@@ -74,12 +74,16 @@ function bpCurl($url, $apiKey, $post = false)
     
     if ($responseString == false) {
         $response = array('error' => curl_error($curl));
+        bpLog('[ERROR] In modules/gateways/bitpay/bp_lib.php::bpCurl(): Invalid response received: ' . var_export($response, true));
     } else {
         $response = json_decode($responseString, true);
+
         if (!$response) {
-            $response = array('error' => 'invalid json: '.$responseString);
+            bpLog('[ERROR] In modules/gateways/bitpay/bp_lib.php::bpCurl(): Invalid response received: ' . var_export($responseString, true));
+            $response = array('error' => 'invalid json: ' . $responseString);
         }
     }
+
     curl_close($curl);
 
     return $response;
@@ -103,11 +107,10 @@ function bpCurl($url, $apiKey, $post = false)
  * If a given option is not provided here, the value of that option will default to what is found in bp_options.php
  * (see api documentation for information on these options).
  *
- * @param string $orderId
- * @param string $price
- * @param string $posData
- * @param array  $options
- *
+ * @param  string $orderId
+ * @param  string $price
+ * @param  string $posData
+ * @param  array  $options
  * @return array
  */
 function bpCreateInvoice($orderId, $price, $posData, $options = array())
@@ -115,27 +118,36 @@ function bpCreateInvoice($orderId, $price, $posData, $options = array())
     global $bpOptions;
 
     $options = array_merge($bpOptions, $options);    // $options override any options found in bp_options.php
-    $options['posData'] = '{"posData": "' . $posData . '"';
-    if ($bpOptions['verifyPos']) { // if desired, a hash of the POS data is included to verify source in the callback
-        $options['posData'].= ', "hash": "' . crypt($posData, $options['apiKey']).'"';
-    }
-    $options['posData'].= '}';
 
-    $options['orderID'] = $orderId;
-    $options['price'] = $price;
-    $network = ($options['network'] == 'test') ? 'test.' : '';
+    $options['posData'] = '{"posData": "' . $posData . '"';
+
+    // if desired, a hash of the POS data is included to verify source in the callback
+    if ($bpOptions['verifyPos']) {
+        $options['posData'] .= ', "hash": "' . crypt($posData, $options['apiKey']) . '"';
+    }
+
+    $options['posData'] .= '}';
+    $options['orderID']  = $orderId;
+    $options['price']    = $price;
+
+    if ($options['network'] == 'test') {
+        $network = 'https://test.bitpay.com/api/invoice/';
+    } else {
+        $network = 'https://bitpay.com/api/invoice/';
+    }
 
     $postOptions = array('orderID', 'itemDesc', 'itemCode', 'notificationEmail', 'notificationURL', 'redirectURL',
         'posData', 'price', 'currency', 'physical', 'fullNotifications', 'transactionSpeed', 'buyerName',
         'buyerAddress1', 'buyerAddress2', 'buyerCity', 'buyerState', 'buyerZip', 'buyerEmail', 'buyerPhone');
+
     foreach ($postOptions as $o) {
         if (array_key_exists($o, $options)) {
             $post[$o] = $options[$o];
         }
     }
-    $post     = json_encode($post);
 
-    $response = bpCurl('https://'.$network.'bitpay.com/api/invoice/', $options['apiKey'], $post);
+    $post     = json_encode($post);
+    $response = bpCurl($network, $options['apiKey'], $post);
 
     return $response;
 }
@@ -143,18 +155,20 @@ function bpCreateInvoice($orderId, $price, $posData, $options = array())
 /**
  * Call from your notification handler to convert $_POST data to an object containing invoice data
  *
- * @param string @apiKey
- *
+ * @param  string $apiKey
+ * @param  null   $network
  * @return array
  */
 function bpVerifyNotification($apiKey = false, $network = null)
 {
     global $bpOptions;
+
     if (!$apiKey) {
         $apiKey = $bpOptions['apiKey'];
     }
 
     $post = file_get_contents("php://input");
+
     if (!$post) {
         return 'No post data';
     }
@@ -170,13 +184,14 @@ function bpVerifyNotification($apiKey = false, $network = null)
     }
 
     $posData = json_decode($json['posData'], true);
+
     if ($bpOptions['verifyPos'] and $posData['hash'] != crypt($posData['posData'], $apiKey)) {
-        return 'authentication failed (bad hash)';
+        return 'ERROR: authentication failed (bad hash)';
     }
+
     $json['posData'] = $posData['posData'];
 
-    if (!array_key_exists('id', $json))
-    {
+    if (!array_key_exists('id', $json)) {
         return 'Cannot find invoice ID';
     }
 
@@ -186,32 +201,34 @@ function bpVerifyNotification($apiKey = false, $network = null)
 /**
  * $options can include ('apiKey')
  *
- * @param string $invoiceId
- * @param string $apiKey
- *
+ * @param  string $invoiceId
+ * @param  string $apiKey
+ * @param  string $network
  * @return array
  */
-function bpGetInvoice($invoiceId, $apiKey = false, $network)
+function bpGetInvoice($invoiceId, $apiKey = false, $network = null)
 {
     global $bpOptions;
+
     if (!$apiKey) {
         $apiKey = $bpOptions['apiKey'];
     }
 
-    if (true == is_null($network)) {
-        $network = $bpOptions['network'];
+    if (true == empty($network) || $network == 'live') {
+        $network = 'https://bitpay.com/api/invoice/';
     } else {
-        $network = ($network == 'test') ? 'test.' : '';
+        $network = 'https://test.bitpay.com/api/invoice/';
     }
 
-    $response = bpCurl('https://'.$network.'bitpay.com/api/invoice/'.$invoiceId, $apiKey);
+    $response = bpCurl($network . $invoiceId, $apiKey);
 
     if (is_string($response)) {
         return $response; // error
     }
+
     $response['posData'] = json_decode($response['posData'], true);
-    if($bpOptions['verifyPos'])
-    {
+
+    if($bpOptions['verifyPos']) {
         $response['posData'] = $response['posData']['posData'];
     }
 
