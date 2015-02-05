@@ -1,6 +1,6 @@
 {
     "name": "bitpay/whmcs",
-    "description": "",
+    "description": "BitPay payment plugin for WHMCS",
     "type": "whmcs-plugin",
     "keywords": [],
     "homepage": "https://github.com/bitpay/whmcs-plugin",
