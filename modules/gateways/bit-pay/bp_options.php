@@ -1,14 +1,39 @@
 <?php
+/**
+ * The MIT License (MIT)
+ *
+ * Copyright (c) 2011-2015 BitPay
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
+ */
 
 global $bpOptions;
 
-// Please look carefully throught these options and adjust according to your installation.  
+// Please look carefully throught these options and adjust according to your installation.
 // Alternatively, any of these options can be dynamically set upon calling the functions in bp_lib.
-
 
 // REQUIRED Api key you created at bitpay.com
 // example: $bpOptions['apiKey'] = 'L21K5IIUG3IN2J3';
 $bpOptions['apiKey'] = '';
+
+// Indicates whether API key is from test.bitpay.com or bitpay.com
+$bpOptions['network'] = 'live';
 
 // whether to verify POS data by hashing above api key.  If set to false, you should
 // have some way of verifying that callback data comes from bitpay.com
@@ -41,6 +66,4 @@ $bpOptions['physical'] = 'true';
 $bpOptions['fullNotifications'] = 'true';
 
 // transaction speed: low/medium/high.   See API docs for more details.
-$bpOptions['transactionSpeed'] = 'low'; 
-
-?>
+$bpOptions['transactionSpeed'] = 'low';

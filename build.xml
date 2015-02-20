@@ -1,0 +1,200 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+/**
+ * The MIT License (MIT)
+ * 
+ * Copyright (c) 2011-2015 BitPay
+ * 
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ * 
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
+ */
+ -->
+<project name="bitpay/build-script" default="build">
+    <!--
+        Default properties
+    -->
+    <property file="${project.basedir}/build/build.properties" />
+
+    <!--
+        Default build for running a build locally
+    -->
+    <target name="build" depends="prepare"
+        description="Runs a full build">
+        <phingcall target="lint" />
+        <phingcall target="phpunit" />
+        <parallel threadCount="5">
+            <phingcall target="phpcs" />
+            <phingcall target="phpmd" />
+            <phingcall target="phploc" />
+            <phingcall target="pdepend" />
+            <phingcall target="build-api-docs" />
+        </parallel>
+    </target>
+
+    <!--
+        Build API and other documentation
+    -->
+    <target name="build-api-docs" depends="prepare"
+        description="Generates API docs for the project">
+        <delete dir="${phpdoc.target}" verbose="true" />
+        <exec executable="${project.bindir}/phpdoc" passthru="true">
+            <arg value="--directory=${phpdoc.directory}" />
+            <arg value="--target=${phpdoc.target}" />
+            <arg line="--ignore=${phpdoc.ignore}" />
+        </exec>
+    </target>
+
+    <!--
+        Used to run a build on Travis CI
+    -->
+    <target name="build-travis" hidden="true"
+        description="Runs a build that is specific to the Travis CI environment">
+        <phingcall target="build" />
+    </target>
+
+    <!--
+        Generates documentation that can be uploaded to a web site and is meant
+        to be used elsewhere by the project.
+    -->
+    <target name="build-docs"
+        description="Generates documentation">
+        <fail message="Needs to be configured" />
+    </target>
+
+    <!--
+        Generates a distribution file that can then be used for uploading to
+        various plugin specific sites for users to download.
+    -->
+    <target name="build-dist"
+        description="Builds a distribution file">
+        <fail message="Needs to be configured" />
+    </target>
+
+    <!--
+        Cleans up and makes sure that the build is
+        clean
+    -->
+    <target name="clean" hidden="true">
+        <delete dir="build/docs" verbose="true" />
+        <delete dir="build/logs" verbose="true" />
+    </target>
+
+    <!--
+        Prepares the project for a build
+    -->
+    <target name="prepare" depends="clean" hidden="true">
+        <mkdir dir="build/cache" />
+        <mkdir dir="build/logs" />
+    </target>
+
+    <!--
+        Lint check all php files, this task should be updated for each
+        project so it only lint checks files specific for that project
+    -->
+    <target name="lint"
+        description="Check the syntax of PHP files">
+        <phplint cachefile="${project.basedir}/build/cache/phplint.cache">
+            <fileset dir="${project.basedir}/">
+                <include name="**/*.php"/>
+                <exclude name="**/build/**"/>
+                <exclude name="**/bin/**"/>
+                <exclude name="**/vendor/**"/>
+            </fileset>
+        </phplint>
+    </target>
+
+    <!--
+        phpunit - Runs phpunit with the phpunit.xml.dist file
+        http://phpunit.de/
+    -->
+    <target name="phpunit"
+        description="Runs unit tests">
+        <exec executable="${project.bindir}/phpunit" passthru="true">
+            <arg value="-c" />
+            <arg path="${phpunit.configuration}" />
+        </exec>
+    </target>
+
+    <!--
+        PHP Mess Detector
+        http://phpmd.org
+    -->
+    <target name="phpmd"
+        description="Runs PHP Mess Detector">
+        <delete file="${phpmd.report.file}" />
+        <exec executable="${project.bindir}/phpmd" passthru="true">
+            <arg path="${phpmd.source}" />
+            <arg value="${phpmd.report.format}" />
+            <arg value="${phpmd.ruleset}" />
+            <arg line="--reportfile ${phpmd.report.file}" />
+            <arg line="--exclude ${phpmd.exclude}" />
+        </exec>
+    </target>
+
+    <!--
+        PHP Lines of Code - Generates a CSV and XML log of how many lines
+        the project is.
+        https://github.com/sebastianbergmann/phploc
+    -->
+    <target name="phploc"
+        description="Calculates the size of the code base">
+        <delete file="${phploc.log.csv}" />
+        <delete file="${phploc.log.xml}" />
+        <exec executable="${project.basedir}/bin/phploc" passthru="true">
+            <arg line="--exclude=${phploc.exclude}" />
+            <arg value="--log-csv=${phploc.log.csv}" />
+            <arg value="--log-xml=${phploc.log.xml}" />
+            <arg path="${phploc.source}" />
+        </exec>
+    </target>
+
+    <!--
+        PHP Depend
+        http://pdepend.org/
+    -->
+    <target name="pdepend"
+        description="Generates some code metrics and pretty pictures">
+        <delete file="${pdepend.jdepend.xml}" />
+        <delete file="${pdepend.summary.xml}" />
+        <exec executable="${project.bindir}/pdepend" passthru="true">
+            <arg value="--jdepend-chart=${pdepend.jdepend.chart}" />
+            <arg value="--jdepend-xml=${pdepend.jdepend.xml}" />
+            <arg value="--overview-pyramid=${pdepend.overview.pyramid}" />
+            <arg value="--summary-xml=${pdepend.summary.xml}" />
+            <arg value="--ignore=${pdepend.ignore}" />
+            <arg path="${pdepend.source}" />
+        </exec>
+    </target>
+
+    <!--
+        PHP Code Sniffer - Makes sure the code meets standards, this
+        needs to be updated for each project
+        https://github.com/squizlabs/PHP_CodeSniffer
+    -->
+    <target name="phpcs"
+        description="Runs PHP Code Sniffer to make sure your code doesn't smell">
+        <delete file="${phpcs.report.xml}" />
+        <exec executable="${project.bindir}/phpcs" passthru="true">
+            <arg value="-p" /> <!-- Show progress of run -->
+            <arg value="--report-xml=${phpcs.report.xml}" />
+            <arg line="--standard=${phpcs.standard}" />
+            <arg line="--ignore=${phpcs.ignore}" />
+            <arg path="${phpcs.source}" />
+        </exec>
+    </target>
+</project>
