@@ -2,6 +2,8 @@
 
 Bitcoin payment plugin for WHMCS using the bitpay.com service.
 
+[![Build Status](https://travis-ci.org/bitpay/whmcs-plugin.svg?branch=master)](https://travis-ci.org/bitpay/whmcs-plugin)
+
 ## Quick Start Guide
 
 To get up and running with our plugin quickly, see the GUIDE here: https://github.com/bitpay/whmcs-plugin/blob/master/GUIDE.md
