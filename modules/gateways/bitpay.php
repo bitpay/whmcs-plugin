@@ -36,11 +36,11 @@ function bitpay_config()
             "Value"=>"Bit-pay"
         ),
         'apiKey' => array(
-            'FriendlyName' => 'API Key from your bitpay.com account.',
+            'FriendlyName' => 'Legacy API Key from your bitpay.com merchant account.',
             'Type'         => 'text'
         ),
         'network' => array(
-          'FriendlyName' => 'Select if API key is from bitpay.com or test.bitpay.com.',
+          'FriendlyName' => 'Select if this key is from bitpay.com or test.bitpay.com.',
           'Type'         => 'dropdown',
           'Options'      => 'live,test',
         ),
