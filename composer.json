@@ -2,7 +2,7 @@
     "name": "bitpay/whmcs",
     "description": "BitPay payment plugin for WHMCS",
     "type": "whmcs-plugin",
-    "keywords": [],
+    "keywords": ["whmcs","plugin","payment","ecommerce","bitcoin","bitpay"],
     "homepage": "https://github.com/bitpay/whmcs-plugin",
     "license": "MIT",
     "support": {
@@ -11,7 +11,9 @@
         "source": "https://github.com/bitpay/whmcs-plugin"
     },
     "minimum-stability": "stable",
-    "require": {},
+    "require": {
+        "composer/installers": "~1.0",
+    },
     "require-dev": {
         "phpmd/phpmd": "*",
         "phpdocumentor/phpdocumentor": "*",
