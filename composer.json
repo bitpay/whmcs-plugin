@@ -11,7 +11,17 @@
         "source": "https://github.com/bitpay/whmcs-plugin"
     },
     "minimum-stability": "stable",
+    "authors": [
+        {
+            "name": "BitPay Integrations Development Team",
+            "email": "integrations@bitpay.com",
+            "homepage": "https://bitpay.com/integrations"
+        }
+    ],
     "require": {
+        "php": ">=5.3",
+        "ext-curl": "*",
+        "ext-json": "*",
         "composer/installers": "~1.0"
     },
     "require-dev": {
