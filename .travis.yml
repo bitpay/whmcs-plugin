@@ -25,6 +25,7 @@ php:
     - 5.5
     - 5.4
     - 5.3
+    - hhvm
 install:
     - composer install
 script: ./bin/phing -propertyfile build/travis.properties build-travis
@@ -32,3 +33,7 @@ cache:
     directories:
         - build/cache/
         - vendor/
+matrix:
+    fast_finish: true
+    allow_failures:
+        - php: hhvm
