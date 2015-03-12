@@ -34,9 +34,7 @@
     </description>
 
     <!-- Import -->
-    <!--<rule ref="rulesets/cleancode.xml" />-->
     <rule ref="rulesets/codesize.xml" />
-    <!--<rule ref="rulesets/controversial.xml" />-->
     <rule ref="rulesets/design.xml" />
     <rule ref="rulesets/naming.xml" />
     <rule ref="rulesets/unusedcode.xml" />
