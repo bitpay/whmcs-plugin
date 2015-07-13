@@ -23,10 +23,18 @@
  * THE SOFTWARE.
  */
 
-include '../../../dbconnect.php';
 include '../../../includes/functions.php';
 include '../../../includes/gatewayfunctions.php';
 include '../../../includes/invoicefunctions.php';
+
+if (file_exists('../../../dbconnect.php')) {
+    include '../../../dbconnect.php';
+} else if (file_exists('../../../init.php')) {
+    include '../../../init.php';
+} else {
+    bpLog('[ERROR] In modules/gateways/bitpay/createinvoice.php: include error: Cannot find dbconnect.php or init.php');
+    die('[ERROR] In modules/gateways/bitpay/createinvoice.php: include error: Cannot find dbconnect.php or init.php');
+}
 
 require 'bp_lib.php';
 
