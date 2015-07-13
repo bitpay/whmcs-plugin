@@ -12,3 +12,6 @@
 
 5 (01/15)
 	* Fix for invalid URL issue #16.
+
+6 (07/13)
+	* Updated to be compatible with both WHMCS versions 5 and 6
