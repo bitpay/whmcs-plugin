@@ -1,6 +1,9 @@
 # Using the BitPay payment plugin for WHMCS
 
 ## Prerequisites
+
+* Last Version Tested: 5.2.3
+
 You must have a BitPay merchant account to use this plugin.  It's free and easy to [sign-up for a BitPay merchant account](https://bitpay.com/start).
 
 
