@@ -12,6 +12,7 @@ To get up and running with our plugin quickly, see the GUIDE here: https://githu
 
 **BitPay Support:**
 
+* Last Version Tested: 5.2.3
 * [BitPay Labs](https://labs.bitpay.com/c/plugins/whmcs)
   * Post a question in our discussion forums
 * [GitHub Issues](https://github.com/bitpay/whmcs-plugin/issues)
