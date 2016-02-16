@@ -24,6 +24,7 @@ modules/folder).
   * On the right side of the page, click on the grey **+ Add New API Key** button to instantly create a new one.
   * Select and copy the entire string for the new API Key ID that you just created. It will look something like this: 43rp4rpa24d6Bz4BR44j8zL44PrU4npVv4DtJA4Kb8.
 3. In the admin control panel, go to **Setup > Payment Gateways**, select **Bit-pay** in the list of modules and click **Activate**.
+  * If you can't find the BitPay plugin in the list of payment gateways -or- in the WHMCS app store, then you may clone this repo and copy modules/gateways into your <whmcs root>/modules/gateways/.
 4. Paste the API Key ID string that you created and copied from step 2. 
 5. Choose a transaction speed. This setting determines how quickly you will receive a payment confirmation from BitPay after an invoice is paid by a customer.
   * High: A confirmation is sent instantly once the payment has been received by the gateway.
