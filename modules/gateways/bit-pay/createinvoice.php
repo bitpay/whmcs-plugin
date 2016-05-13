@@ -100,9 +100,10 @@ $options = $_POST;
 
 unset($options['invoiceId']);
 unset($options['systemURL']);
+unset($options['redirectURL']);
 
 $options['notificationURL']  = $_POST['systemURL'].'/modules/gateways/callback/bitpay.php';
-$options['redirectURL']      = $_POST['systemURL'];
+$options['redirectURL']      = isset($_POST['redirectURL']) ? $_POST['redirectURL'] : $_POST['systemURL'];
 $options['apiKey']           = $GATEWAY['apiKey'];
 $options['transactionSpeed'] = $GATEWAY['transactionSpeed'];
 $options['currency']         = $currency;
