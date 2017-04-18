@@ -71,11 +71,8 @@ if (true === is_string($response) || true === empty($response)) {
     // Checks transaction number isn't already in the database and ends processing if it does
     checkCbTransID($transid);
 
-    // Successful
-    $fee = 0;
-
-    // left blank, this will auto-fill as the full balance
-    $amount = '';
+    $amount = $response['price'];
+    $fee = bcmul($response['price'], "0.01",4);
 
     switch ($response['status']) {
         case 'paid':
