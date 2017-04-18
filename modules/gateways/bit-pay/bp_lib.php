@@ -147,6 +147,7 @@ function bpCreateInvoice($orderId, $price, $posData, $options = array())
     }
 
     $post     = json_encode($post);
+
     $response = bpCurl($network, $options['apiKey'], $post);
 
     return $response;

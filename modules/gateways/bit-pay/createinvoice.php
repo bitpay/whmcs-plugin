@@ -23,6 +23,8 @@
  * THE SOFTWARE.
  */
 
+use WHMCS\Database\Capsule;
+
 include '../../../includes/functions.php';
 include '../../../includes/gatewayfunctions.php';
 include '../../../includes/invoicefunctions.php';
@@ -45,8 +47,8 @@ $GATEWAY = getGatewayVariables($gatewaymodule);
 // get invoice
 $invoiceId = (int) $_POST['invoiceId'];
 $price     = $currency = false;
-$result    = mysql_query("SELECT tblinvoices.total, tblinvoices.status, tblcurrencies.code FROM tblinvoices, tblclients, tblcurrencies where tblinvoices.userid = tblclients.id and tblclients.currency = tblcurrencies.id and tblinvoices.id=$invoiceId");
-$data      = mysql_fetch_assoc($result);
+$result    = Capsule::connection()->select("SELECT tblinvoices.total, tblinvoices.status, tblcurrencies.code FROM tblinvoices, tblclients, tblcurrencies where tblinvoices.userid = tblclients.id and tblclients.currency = tblcurrencies.id and tblinvoices.id=$invoiceId");
+$data      = (array)$result[0];
 
 if (!$data) {
     bpLog('[ERROR] In modules/gateways/bitpay/createinvoice.php: No invoice found for invoice id #' . $invoiceId);
@@ -65,8 +67,8 @@ if ($status != 'Unpaid') {
 // if convert-to option is set (gateway setting), then convert to requested currency
 $convertTo = false;
 $query     = "SELECT value from tblpaymentgateways where `gateway` = '$gatewaymodule' and `setting` = 'convertto'";
-$result    = mysql_query($query);
-$data      = mysql_fetch_assoc($result);
+$result    = Capsule::connection()->select($query);
+$data      = (array)$result[0];
 
 if ($data) {
     $convertTo = $data['value'];
@@ -75,16 +77,16 @@ if ($data) {
 if ($convertTo) {
     // fetch $currency and $convertTo currencies
     $query           = "SELECT rate FROM tblcurrencies where `code` = '$currency'";
-    $result          = mysql_query($query);
-    $currentCurrency = mysql_fetch_assoc($result);
+    $result          = Capsule::connection()->select($query);
+    $currentCurrency = (array)$result[0];
 
     if (!$currentCurrency) {
         bpLog('[ERROR] In modules/gateways/bitpay/createinvoice.php: Invalid invoice currency of ' . $currency);
         die('[ERROR] In modules/gateways/bitpay/createinvoice.php: Invalid invoice currency of ' . $currency);
     }
 
-    $result            = mysql_query("SELECT code, rate FROM tblcurrencies where `id` = $convertTo");
-    $convertToCurrency = mysql_fetch_assoc($result);
+    $result            = Capsule::connection()->select("SELECT code, rate FROM tblcurrencies where `id` = $convertTo");
+    $convertToCurrency = (array)$result[0];
 
     if (!$convertToCurrency) {
         bpLog('[ERROR] In modules/gateways/bitpay/createinvoice.php: Invalid convertTo currency of ' . $convertTo);
@@ -100,10 +102,9 @@ $options = $_POST;
 
 unset($options['invoiceId']);
 unset($options['systemURL']);
-unset($options['redirectURL']);
 
 $options['notificationURL']  = $_POST['systemURL'].'/modules/gateways/callback/bitpay.php';
-$options['redirectURL']      = isset($_POST['redirectURL']) ? $_POST['redirectURL'] : $_POST['systemURL'];
+$options['redirectURL']      = $_POST['systemURL'];
 $options['apiKey']           = $GATEWAY['apiKey'];
 $options['transactionSpeed'] = $GATEWAY['transactionSpeed'];
 $options['currency']         = $currency;

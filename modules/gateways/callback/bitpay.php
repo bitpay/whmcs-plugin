@@ -23,6 +23,8 @@
  * THE SOFTWARE.
  */
 
+use WHMCS\Database\Capsule;
+
 // Required File Includes
 include '../../../includes/functions.php';
 include '../../../includes/gatewayfunctions.php';
@@ -60,6 +62,11 @@ if (true === is_string($response) || true === empty($response)) {
     $invoiceid = checkCbInvoiceID($invoiceid, $GATEWAY['name']);
 
     $transid = $response['id'];
+    
+    
+    $invoice = Capsule::table('tblinvoices')->where('id', $invoiceid)->first();
+    
+    $userid = $invoice->userid;
 
     // Checks transaction number isn't already in the database and ends processing if it does
     checkCbTransID($transid);
@@ -77,11 +84,13 @@ if (true === is_string($response) || true === empty($response)) {
             break;
         case 'confirmed':
             // Apply Payment to Invoice
+            Capsule::table('tblclients')->where('id', $userid)->update(array('defaultgateway' => $gatewaymodule));
             addInvoicePayment($invoiceid, $transid, $amount, $fee, $gatewaymodule);
             logTransaction($GATEWAY['name'], $response, 'The payment has been received, and the transaction has been confirmed on the bitcoin network. This will be updated when the transaction has been completed.');
             break;
         case 'complete':
             // Apply Payment to Invoice
+            Capsule::table('tblclients')->where('id', $userid)->update(array('defaultgateway' => $gatewaymodule));
             addInvoicePayment($invoiceid, $transid, $amount, $fee, $gatewaymodule);
             logTransaction($GATEWAY['name'], $response, 'The transaction is now complete.');
             break;

@@ -96,7 +96,7 @@ function bitpay_link($params)
         'buyerEmail'    => $email,
         'buyerPhone'    => $phone,
     );
-
+    
     $form = '<form action="' . $systemurl . '/modules/gateways/bit-pay/createinvoice.php" method="POST">';
 
     foreach ($post as $key => $value) {
