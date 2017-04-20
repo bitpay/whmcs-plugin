@@ -103,7 +103,7 @@ function bitpay_link($params)
         $form .= '<input type="hidden" name="' . $key . '" value = "' . $value . '" />';
     }
 
-    $form .= '<input type="submit" value="' . $params['langpaynow'] . '" />';
+    $form .= '<input type="image" src="//bitpay.com/img/button-small.png" border="0" name="submit" alt="BitPay, the easy way to pay with bitcoins." >';
     $form .= '</form>';
 
     return $form;
