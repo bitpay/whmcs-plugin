@@ -2,7 +2,7 @@
 /**
  * The MIT License (MIT)
  *
- * Copyright (c) 2011-2015 BitPay
+ * Copyright (c) 2011-2018 BitPay
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -24,6 +24,7 @@
  */
 
 require_once 'bp_options.php';
+require_once '../../version.php';
 
 /**
  * @param string $contents
@@ -57,7 +58,7 @@ function bpCurl($url, $apiKey, $post = false)
         'Content-Type: application/json',
         'Content-Length: ' . $length,
         'Authorization: Basic ' . $uname,
-        'X-BitPay-Plugin-Info: whmcs3',
+        'X-BitPay-Plugin-Info: whmcs'. $version,
     );
 
     curl_setopt($curl, CURLOPT_PORT, 443);

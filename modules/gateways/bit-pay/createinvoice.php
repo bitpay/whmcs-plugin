@@ -2,7 +2,7 @@
 /**
  * The MIT License (MIT)
  *
- * Copyright (c) 2011-2015 BitPay
+ * Copyright (c) 2011-2018 BitPay
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -29,6 +29,8 @@ include '../../../includes/functions.php';
 include '../../../includes/gatewayfunctions.php';
 include '../../../includes/invoicefunctions.php';
 
+require 'bp_lib.php';
+
 if (file_exists('../../../dbconnect.php')) {
     include '../../../dbconnect.php';
 } else if (file_exists('../../../init.php')) {
@@ -37,8 +39,6 @@ if (file_exists('../../../dbconnect.php')) {
     bpLog('[ERROR] In modules/gateways/bitpay/createinvoice.php: include error: Cannot find dbconnect.php or init.php');
     die('[ERROR] In modules/gateways/bitpay/createinvoice.php: include error: Cannot find dbconnect.php or init.php');
 }
-
-require 'bp_lib.php';
 
 $gatewaymodule = 'bitpay';
 
@@ -114,7 +114,7 @@ $invoice                     = bpCreateInvoice($invoiceId, $price, $invoiceId, $
 
 if (isset($invoice['error'])) {
     bpLog('[ERROR] In modules/gateways/bitpay/createinvoice.php: Invoice error: ' . var_export($invoice['error'], true));
-    die('[ERROR] In modules/gateways/bitpay/createinvoice.php: Invoice error: ' . var_export($invoice['error']['message'], true));
+    die('[ERROR] In modules/gateways/bitpay/createinvoice.php: Invoice error: ' . var_export($invoice['error'], true));
 } else {
     header('Location: ' . $invoice['url']);
 }

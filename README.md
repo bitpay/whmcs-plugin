@@ -12,7 +12,7 @@ To get up and running with our plugin quickly, see the GUIDE here: https://githu
 
 **BitPay Support:**
 
-* Last Version Tested: 7.1.2
+* Last Version Tested: 7.4.2
 * [GitHub Issues](https://github.com/bitpay/whmcs-plugin/issues)
   * Open an issue if you are having issues with this plugin
 * [Support](https://help.bitpay.com)
@@ -26,26 +26,16 @@ To get up and running with our plugin quickly, see the GUIDE here: https://githu
 
 ## Troubleshooting
 
-0. Sometimes a download can become corrupted for various reasons.  However, you can verify that the release package you downloaded is correct by checking the md5 checksum "fingerprint" of your download against the md5 checksum value shown on the Releases page.  Even the smallest change in the downloaded release package will cause a different value to be shown!
-  * If you are using Windows, you can download a checksum verifier tool and instructions directly from Microsoft here: http://www.microsoft.com/en-us/download/details.aspx?id=11533
-  * If you are using Linux or OS X, you already have the software installed on your system.
-    * On Linux systems use the md5sum program.  For example:
-      * md5sum filename
-    * On OS X use the md5 program.  For example:
-      * md5 filename
-1. Ensure a valid SSL certificate is installed on your server. Also ensure your root CA cert is updated. If your CA cert is not current, you will see curl SSL verification errors.
-2. Verify that your web server is not blocking POSTs from servers it may not recognize. Double check this on your firewall as well, if one is being used.
-3. Check the version of this plugin against the official plugin repository to ensure you are using the latest version. Your issue might have been addressed in a newer version! See the [Releases](https://github.com/bitpay/whmcs-plugin/releases/latest) page for the latest.
-4. If all else fails, contact us using one of the methods described in the Support section above.
+0. Ensure a valid SSL certificate is installed on your server. Also ensure your root CA cert is updated. If your CA cert is not current, you will see curl SSL verification errors.
+1. Verify that your web server is not blocking POSTs from servers it may not recognize. Double check this on your firewall as well, if one is being used.
+2. Check the version of this plugin against the official plugin repository to ensure you are using the latest version. Your issue might have been addressed in a newer version! See the [Releases](https://github.com/bitpay/whmcs-plugin/releases/latest) page for the latest.
+3. If all else fails, contact us using one of the methods described in the Support section above.
 
 **TIP**: When contacting support it will help us is you provide:
 
 * WHMCS and BitPay Plugin Version
-* Other plugins you have installed
-  * Some plugins do not play nice
-* Configuration settings for the plugin (Most merchants take screen grabs)
 * Any log files that will help
-  * Web server error logs
+  * WHMCS logs and Web server error logs
 * Screen grabs of error message if applicable.
 
 ## Contribute
