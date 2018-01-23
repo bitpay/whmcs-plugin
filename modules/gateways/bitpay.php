@@ -33,7 +33,7 @@ function bitpay_config()
     $configarray = array(
         "FriendlyName" => array(
             "Type" => "System",
-            "Value"=>"Bit-pay"
+            "Value"=>"BitPay"
         ),
         'apiKey' => array(
             'FriendlyName' => 'Legacy API Key from your bitpay.com merchant account.',

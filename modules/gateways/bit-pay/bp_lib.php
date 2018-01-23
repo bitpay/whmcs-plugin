@@ -24,7 +24,7 @@
  */
 
 require_once 'bp_options.php';
-require_once '../../version.php';
+require_once 'version.php';
 
 /**
  * @param string $contents
