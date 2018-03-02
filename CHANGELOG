@@ -1,8 +1,11 @@
+[1.1.2] - 2 March 2018
+* Removed support for PHP 5.3
+* Ability to specify redirectURL (PR #47)
 
-1.1.1 [23 January 2018]
+[1.1.1]  - 23 January 2018
 Improved logging, tested against WHMCS 7.4.2
 
-1.1.0 [April 2018]
+[1.1.0] - April 2018
 Compatibility with WHMCS 7.1
 
 Previous changelog:
