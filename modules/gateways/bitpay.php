@@ -44,6 +44,11 @@ function bitpay_config()
           'Type'         => 'dropdown',
           'Options'      => 'live,test',
         ),
+        'redirectURL' => array(
+                'FriendlyName' => 'Redirect URL after BitPay invoice',
+                'Type' => 'text',
+                'Value' => isset($_POST['redirectURL']) ? $_POST['redirectURL'] : $_POST['systemURL']
+        ),
         'transactionSpeed' => array(
             'FriendlyName' => 'Transaction Speed',
             'Type'         => 'dropdown',
