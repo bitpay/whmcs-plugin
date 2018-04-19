@@ -1,3 +1,6 @@
+[1.1.3] - 19 April 2018
+* Added redirectURL to config screen
+
 [1.1.2] - 2 March 2018
 * Removed support for PHP 5.3
 * Ability to specify redirectURL (PR #47)
