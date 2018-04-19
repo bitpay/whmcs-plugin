@@ -106,7 +106,7 @@ unset($options['redirectURL']);
 
 
 $options['notificationURL']  = $_POST['systemURL'].'/modules/gateways/callback/bitpay.php';
-$options['redirectURL']      = isset($GATEWAY['redirectURL']) ? $GATEWAY['redirectURL'] : $_POST['systemURL'];
+$options['redirectURL']      = !empty($GATEWAY['redirectURL']) ? $GATEWAY['redirectURL'] : $_POST['systemURL'];
 $options['apiKey']           = $GATEWAY['apiKey'];
 $options['transactionSpeed'] = $GATEWAY['transactionSpeed'];
 $options['currency']         = $currency;
