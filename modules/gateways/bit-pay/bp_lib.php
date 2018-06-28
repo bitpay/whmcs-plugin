@@ -57,8 +57,7 @@ function bpCurl($url, $apiKey, $post = false)
     $header = array(
         'Content-Type: application/json',
         'Content-Length: ' . $length,
-        'Authorization: Basic ' . $uname,
-        'X-BitPay-Plugin-Info: whmcs'. $version,
+        'Authorization: Basic ' . $uname
     );
 
     curl_setopt($curl, CURLOPT_PORT, 443);
@@ -86,6 +85,8 @@ function bpCurl($url, $apiKey, $post = false)
     }
 
     curl_close($curl);
+    
+    logModuleCall("BitPay", $url, $post, $responseString, "", "");
 
     return $response;
 }
@@ -117,9 +118,11 @@ function bpCurl($url, $apiKey, $post = false)
 function bpCreateInvoice($orderId, $price, $posData, $options = array())
 {
     global $bpOptions;
+    global $version;
 
     $options = array_merge($bpOptions, $options);    // $options override any options found in bp_options.php
 
+    $options['pluginInfo'] = "whmcs-plugin-". $version;
     $options['posData'] = '{"posData": "' . $posData . '"';
 
     // if desired, a hash of the POS data is included to verify source in the callback
@@ -138,8 +141,7 @@ function bpCreateInvoice($orderId, $price, $posData, $options = array())
     }
 
     $postOptions = array('orderID', 'itemDesc', 'itemCode', 'notificationEmail', 'notificationURL', 'redirectURL',
-        'posData', 'price', 'currency', 'physical', 'fullNotifications', 'transactionSpeed', 'buyerName',
-        'buyerAddress1', 'buyerAddress2', 'buyerCity', 'buyerState', 'buyerZip', 'buyerEmail', 'buyerPhone');
+        'posData', 'price', 'currency', 'physical', 'fullNotifications', 'transactionSpeed', 'buyerEmail', 'pluginInfo');
 
     foreach ($postOptions as $o) {
         if (array_key_exists($o, $options)) {
