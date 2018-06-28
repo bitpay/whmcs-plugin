@@ -2,10 +2,9 @@
 
 ## Prerequisites
 
-* Last Version Tested: 7.4.2
+* Last Version Tested: 7.5.1
 
 You must have a BitPay merchant account to use this plugin.  It's free and easy to [sign-up for a BitPay merchant account](https://bitpay.com/start).
-
 
 
 ## Installation
