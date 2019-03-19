@@ -32,6 +32,7 @@ After you have enabled the BitPay plugin, the configuration steps are:
 This plugin also includes an IPN (Instant Payment Notification) endpoint that will update your WHMCS invoice status.
 
 An order note will automatically be added with a link to the BitPay invoice to monitor the status:
+
  * Initially the WHMCS invoice will be in a **Unpaid** status when it is initially created.
  * After the invoice is paid by the user, it will change to a **Payment Pending** status. 
  * When BitPay finalizes the transaction, it will change to a **Paid** status, and your order will be safe to ship, allow access to downloadable products, etc.
