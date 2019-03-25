@@ -289,10 +289,13 @@ function showModal(invoiceData) {
     invoiceData = atob(invoiceData);
 
     var payment_status = null;
+    var is_paid = false
     window.addEventListener("message", function(event) {
-        console.log('event.data', event.data)
         payment_status = event.data.status;
-        if (payment_status == 'paid') {
+        if(payment_status == 'paid'){
+                is_paid = true
+            }
+        if (is_paid == true) {
             //just some test stuff
             var saveData = jQuery.ajax({
                 type: 'POST',
