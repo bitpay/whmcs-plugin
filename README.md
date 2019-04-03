@@ -1,7 +1,7 @@
 ## Integration Requirements
 
 
-[![Build Status](https://travis-ci.org/bitpay/whmcs-plugin.svg?branch=master)](https://travis-ci.org/bitpay/bitpay-checkout-for-woocommerce)
+[![Build Status](https://travis-ci.org/bitpay/whmcs-plugin.svg?branch=master)](https://travis-ci.org/bitpay/whmcs-plugin)
 
 
 This version requires the following:
