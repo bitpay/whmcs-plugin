@@ -1,7 +1,7 @@
 <?php
 
 /**
- * BitPay Checkout Callback File 3.0.0.6
+ * BitPay Checkout IPN 3.0.1.0
  *
  * This file demonstrates how a payment gateway callback should be
  * handled within WHMCS.
@@ -22,10 +22,13 @@ require_once  '../../../init.php';
 require_once  '../../../includes/gatewayfunctions.php';
 require_once  '../../../includes/invoicefunctions.php';
 
-
-
 $all_data = json_decode(file_get_contents("php://input"), true);
-#
+
+error_log("===========INCOMING IPN=========================");
+error_log(date('d.m.Y H:i:s'));
+error_log(print_r($all_data, true));
+error_log("===========END OF IPN===========================");
+    
 $data = $all_data['data'];
 $event = $all_data['event'];
 
