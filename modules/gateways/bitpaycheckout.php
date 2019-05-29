@@ -1,6 +1,6 @@
 <?php
 /**
- * BitPay Checkout Callback File 3.0.0.0
+ * BitPay Checkout 3.0.1.0
  *
  * Within the module itself, all functions must be prefixed with the module
  * filename, followed by an underscore, and then the function name. For this
@@ -125,22 +125,14 @@ function bitpaycheckout_config()
             'Description' => 'Select <b>Test</b> for testing the plugin, <b>Production</b> when you are ready to go live.<br>',
         ),
         /*
-    'bitpay_checkout_flow' => array(
-    'FriendlyName' => 'Checkout Flow',
-    'Type' => 'radio',
-    'Options' => 'Modal,Redirect',
-    'Description' => 'If this is set to <b>Redirect</b>, then the customer will be redirected to <b>BitPay</b> to checkout, and return to the checkout page once the payment is made.<br>If this is set to <b>Modal</b>, the user will stay on your site and complete the transaction.<br>',
-    ),
+        'bitpay_checkout_logging' => array(
+            'FriendlyName' => 'Error Logging',
+            'Type' => 'radio',
+            'Options' => 'Yes, No',
+            'Description' => 'If <b>Yes</b>, BitPay will log the invoice data (Invoice ID, API endpoint, etc) to your server\'s error log.<br>',
+        ),
+        */
 
-    // the textarea field type allows for multi-line text input
-    'bitpay_checkout_checkout_message' => array(
-    'FriendlyName' => 'Checkout Message',
-    'Type' => 'textarea',
-    'Rows' => '3',
-    'Cols' => '60',
-    'Description' => 'Insert any custom message that should appear on checkout.',
-    ),
-     */
     );
 }
 
@@ -158,6 +150,9 @@ spl_autoload_register('BPC_autoloader');
 
 function bitpaycheckout_link($config_params)
 {
+    $curpage = $_SERVER['SCRIPT_NAME'];
+    $curpage = str_replace("/", "", $curpage);
+    if ($curpage != 'viewinvoice.php'): return;endif;
     ?>
 <script src="//bitpay.com/bitpay.min.js" type="text/javascript"></script>
 <script src="//ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
@@ -229,7 +224,7 @@ function bitpaycheckout_link($config_params)
 
     $callback_url = $protocol . $_SERVER['SERVER_NAME'] . $dir . '/modules/gateways/bitpaycheckout/bitpaycheckout_callback.php';
     $params->extension_version = bitpaycheckout_MetaData();
-    $params->extension_version = $params->extension_version['DisplayName'].'_'.$params->extension_version['APIVersion'];
+    $params->extension_version = $params->extension_version['DisplayName'] . '_' . $params->extension_version['APIVersion'];
     $params->price = $amount;
     $params->currency = $currencyCode;
     $params->orderId = trim($invoiceId);
@@ -254,6 +249,10 @@ function bitpaycheckout_link($config_params)
     $invoice->BPC_createInvoice();
     $invoiceData = json_decode($invoice->BPC_getInvoiceData());
     $invoiceID = $invoiceData->data->id;
+        error_log("=======USER LOADED BITPAY CHECKOUT INVOICE=====");
+        error_log(date('d.m.Y H:i:s'));
+        error_log(print_r($invoiceData, true));
+        error_log("=======END OF INVOICE==========================");
     
     #insert into the database
     $pdo = Capsule::connection()->getPdo();
@@ -280,7 +279,7 @@ function bitpaycheckout_link($config_params)
 
     $htmlOutput .= '<button name = "bitpay-payment" class = "btn btn-success btn-sm" onclick = "showModal(\'' . base64_encode($invoice->BPC_getInvoiceData()) . '\');return false;">' . $langPayNow . '</button>';
 
-?>
+    ?>
 
 <script type='text/javascript'>
 function showModal(invoiceData) {
@@ -319,8 +318,8 @@ function showModal(invoiceData) {
     bitpay.showInvoice('<?php echo $invoiceID; ?>');
 }
 </script>
-
 <?php
-    $htmlOutput .= '</form>';
+$htmlOutput .= '</form>';
     return $htmlOutput;
+
 }

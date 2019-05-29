@@ -1,7 +1,7 @@
 <?php
 
 /**
- * BitPay Checkout Callback File 3.0.0.0
+ * BitPay Checkout Callback 3.0.1.0
  *
  * This file demonstrates how a payment gateway callback should be
  * handled within WHMCS.
