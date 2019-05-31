@@ -86,7 +86,7 @@ switch ($event['name']) {
 
      break;
      
-     #confirmation error - put in Unpaid
+     #confirmation error - put in Unpai
      case 'invoice_failedToConfirm':
         $table = "tblinvoices";
         $update = array("status" => 'Unpaid');
