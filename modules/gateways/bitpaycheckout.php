@@ -1,6 +1,6 @@
 <?php
 /**
- * BitPay Checkout 3.0.1.0
+ * BitPay Checkout 3.0.1.1
  *
  * Within the module itself, all functions must be prefixed with the module
  * filename, followed by an underscore, and then the function name. For this
