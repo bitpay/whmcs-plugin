@@ -86,10 +86,10 @@ switch ($event['name']) {
 
      break;
      
-     #confirmation error - put in Payment Pending
+     #confirmation error - put in Unpaid
      case 'invoice_failedToConfirm':
         $table = "tblinvoices";
-        $update = array("status" => 'Payment Pending');
+        $update = array("status" => 'Unpaid');
         $where = array("id" => $orderid, "paymentmethod" => "bitpaycheckout");
         update_query($table, $update, $where);
 
@@ -98,7 +98,6 @@ switch ($event['name']) {
         $update = array("transaction_status" => $event['name']);
         $where = array("order_id" => $orderid, "transaction_id" => $order_invoice);
         update_query($table, $update, $where);
-
 
      break;
      
