@@ -54,7 +54,7 @@ function bitpaycheckout_MetaData()
 {
     return array(
         'DisplayName' => 'BitPay_Checkout_WHCMS',
-        'APIVersion' => '3.0.0.0', // Use API Version 1.1
+        'APIVersion' => '3.0.1.0', // Use API Version 1.1
         'DisableLocalCreditCardInput' => false,
         'TokenisedStorage' => false,
     );
@@ -109,6 +109,28 @@ function bitpaycheckout_config()
             'Description' => 'Your <b>production</b> merchant token.  <a href = "https://www.bitpay.com/dashboard/merchant/api-tokens" target = "_blank">Create one here</a> and <b>uncheck</b> `Require Authentication`.',
         ),
 
+        'bitpay_checkout_risk' => array(
+            'FriendlyName' => 'Risk Mitigation',
+            'Type' => 'dropdown',
+            'Options' => 'Default,High,Medium,Low',
+            'Description' => '
+            <ul>
+            <li> <b>High</b>: The merchant takes the risk to dispatch orders where the payment has not yet been confirmed by BitPay.</li>
+            <li> <b>Medium</b>: The merchant decides to dispatch orders where the BitPay invoice has been set to “confirmed” by BitPay (for instance, with a Bitcoin payment, this is equivalent to 1 block confirmation). This is the default option and best trade off in terms of consumer experience versus security.</li>
+            <li> <b>Low</b>: The merchant decides to dispatch orders where the BitPay invoice has been set to “complete” by BitPay (for instance, with a Bitcoin payment, this is equivalent to 6 block confirmation). This is the most secure option but it requires the consumer to wait about 1 hour to get the order confirmation.
+            (note: this parameter is also called “transaction speed” in our system)</li>
+            <li> <b>Default</b>: This will use the default setting in your Dashboard (<b><i>medium</i></b>)</li>
+            
+            </ul>',
+        ),
+        /*
+        'bitpay_checkout_dateformat' => array(
+            'FriendlyName' => 'Date Format',
+            'Type' => 'dropdown',
+            'Options' => 'Y-m-d,d-m-Y',
+            'Description' => 'By default, the date will be formatted as Y-m-d (2019-05-31).  d-m-Y will format to (05-31-2019)',
+        ),
+        */
         // the yesno field type displays a single checkbox option
         /*
         'bitpay_checkout_capture_email' => array(
@@ -120,7 +142,7 @@ function bitpaycheckout_config()
         // the dropdown field type renders a select menu of options
         'bitpay_checkout_endpoint' => array(
             'FriendlyName' => 'Endpoint',
-            'Type' => 'radio',
+            'Type' => 'dropdown',
             'Options' => 'Test,Production',
             'Description' => 'Select <b>Test</b> for testing the plugin, <b>Production</b> when you are ready to go live.<br>',
         ),
@@ -184,7 +206,6 @@ function bitpaycheckout_link($config_params)
     $moduleName = $config_params['paymentmethod'];
 
     $whmcsVersion = $config_params['whmcsVersion'];
-    #$url = 'https://www.demopaymentgateway.com/do.payment';
     $postfields = array();
     $postfields['username'] = $username;
     $postfields['invoice_id'] = $invoiceId;
@@ -235,12 +256,12 @@ function bitpaycheckout_link($config_params)
     $params->extendedNotifications = true;
     $params->transactionSpeed = 'medium';
     $params->acceptanceWindow = 1200000;
+
     if (!empty($email)):
         $buyerInfo = new stdClass();
         $buyerInfo->name = $firstname . ' ' . $lastname;
         $buyerInfo->email = $email;
         $params->buyer = $buyerInfo;
-
     endif;
 
     $item = new BPC_Item($config, $params);
@@ -257,6 +278,12 @@ function bitpaycheckout_link($config_params)
     #insert into the database
     $pdo = Capsule::connection()->getPdo();
     $pdo->beginTransaction();
+    #$created_at = $config_params['bitpay_checkout_dateformat'];
+    
+    #if($created_at == ''):
+        $created_at = 'Y-m-d';
+    #endif;
+
 
     try {
         $statement = $pdo->prepare(
@@ -268,7 +295,7 @@ function bitpaycheckout_link($config_params)
                 ':order_id' => $params->orderId,
                 ':transaction_id' => $invoiceID,
                 ':transaction_status' => 'new',
-                ':created_at' => date('Y-m-d H:i:s'),
+                ':created_at' => date($created_at.' H:i:s'),
             ]
         );
         $pdo->commit();

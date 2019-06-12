@@ -123,7 +123,7 @@ switch ($event['name']) {
 
 
         #do an insert on tblaccounts
-        $values = array("userid" => $userid, "description" => "BitPay Refund of Transaction ID: ".$oder_invoice, "amountin" => "0","currency"=>"0","amountout" => $price,"invoiceid" =>$orderid,"date"=>date("Y-m-d H:i:s"));
+        $values = array("userid" => $userid, "description" => "BitPay Refund of Transaction ID: ".$order_invoice, "amountin" => "0","currency"=>"0","amountout" => $price,"invoiceid" =>$orderid,"date"=>date("Y-m-d H:i:s"));
         $newid = insert_query($table, $values);
 
         #update the tblinvoices to show Refunded
