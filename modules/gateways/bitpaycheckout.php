@@ -108,7 +108,7 @@ function bitpaycheckout_config()
             'Default' => '',
             'Description' => 'Your <b>production</b> merchant token.  <a href = "https://www.bitpay.com/dashboard/merchant/api-tokens" target = "_blank">Create one here</a> and <b>uncheck</b> `Require Authentication`.',
         ),
-
+        /*
         'bitpay_checkout_risk' => array(
             'FriendlyName' => 'Risk Mitigation',
             'Type' => 'dropdown',
@@ -123,7 +123,7 @@ function bitpaycheckout_config()
             
             </ul>',
         ),
-        /*
+       
         'bitpay_checkout_dateformat' => array(
             'FriendlyName' => 'Date Format',
             'Type' => 'dropdown',
@@ -131,16 +131,7 @@ function bitpaycheckout_config()
             'Description' => 'By default, the date will be formatted as Y-m-d (2019-05-31).  d-m-Y will format to (05-31-2019)',
         ),
         */
-        // the yesno field type displays a single checkbox option
-        /*
-        'bitpay_checkout_capture_email' => array(
-        'FriendlyName' => 'Auto-Capture Email',
-        'Type' => 'yesno',
-        'Description' => 'If <b>Yes</b>, the client will not be able to change the email address on the BitPay invoice.If <b>No</b>, they will be able to add their own email address when paying the invoice.',
-        ),
-         */
-        // the dropdown field type renders a select menu of options
-        'bitpay_checkout_endpoint' => array(
+            'bitpay_checkout_endpoint' => array(
             'FriendlyName' => 'Endpoint',
             'Type' => 'dropdown',
             'Options' => 'Test,Production',
@@ -254,9 +245,10 @@ function bitpaycheckout_link($config_params)
     $params->redirectURL = $params->notificationURL;
 
     $params->extendedNotifications = true;
-    $params->transactionSpeed = 'medium';
+    
+    #set the transaction speed in the plugin and override the plugin
+    
     $params->acceptanceWindow = 1200000;
-
     if (!empty($email)):
         $buyerInfo = new stdClass();
         $buyerInfo->name = $firstname . ' ' . $lastname;
@@ -274,15 +266,14 @@ function bitpaycheckout_link($config_params)
         error_log(date('d.m.Y H:i:s'));
         error_log(print_r($invoiceData, true));
         error_log("=======END OF INVOICE==========================");
+        error_log(print_r($params,true));
     
     #insert into the database
     $pdo = Capsule::connection()->getPdo();
     $pdo->beginTransaction();
-    #$created_at = $config_params['bitpay_checkout_dateformat'];
+   
+    $created_at = 'Y-m-d';
     
-    #if($created_at == ''):
-        $created_at = 'Y-m-d';
-    #endif;
 
 
     try {
