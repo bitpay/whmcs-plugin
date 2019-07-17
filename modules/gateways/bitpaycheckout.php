@@ -54,7 +54,7 @@ function bitpaycheckout_MetaData()
 {
     return array(
         'DisplayName' => 'BitPay_Checkout_WHCMS',
-        'APIVersion' => '3.0.1.0', // Use API Version 1.1
+        'APIVersion' => '3.0.1.3', // Use API Version 1.1
         'DisableLocalCreditCardInput' => false,
         'TokenisedStorage' => false,
     );
