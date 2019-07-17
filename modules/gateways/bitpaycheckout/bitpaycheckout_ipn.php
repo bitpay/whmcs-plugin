@@ -1,7 +1,7 @@
 <?php
 
 /**
- * BitPay Checkout IPN 3.0.1.2
+ * BitPay Checkout IPN 3.0.1.3
  *
  * This file demonstrates how a payment gateway callback should be
  * handled within WHMCS.
@@ -40,7 +40,6 @@ $order_invoice = $data['id'];
 
 $price = $data['price'];
 
-$data['id'];
 #first see if the ipn matches
 #get the user id first
 $table = "_bitpay_checkout_transactions";
@@ -57,7 +56,7 @@ switch ($event['name']) {
      case 'invoice_confirmed':
      
         $table = "tblinvoices";
-        $update = array("status" => 'Paid');
+        $update = array("status" => 'Paid','datepaid' => date("Y-m-d H:i:s"));
         $where = array("id" => $orderid, "paymentmethod" => "bitpaycheckout");
         update_query($table, $update, $where);
 
@@ -73,7 +72,7 @@ switch ($event['name']) {
      #processing - put in Payment Pending
      case 'invoice_paidInFull':
         $table = "tblinvoices";
-        $update = array("status" => 'Payment Pending');
+        $update = array("status" => 'Payment Pending','datepaid' => date("Y-m-d H:i:s"));
         $where = array("id" => $orderid, "paymentmethod" => "bitpaycheckout");
         update_query($table, $update, $where);
 
@@ -128,7 +127,7 @@ switch ($event['name']) {
 
         #update the tblinvoices to show Refunded
         $table = "tblinvoices";
-        $update = array("status" => 'Refunded');
+        $update = array("status" => 'Refunded','datepaid' => date("Y-m-d H:i:s"));
         $where = array("id" => $orderid, "paymentmethod" => "bitpaycheckout");
         update_query($table, $update, $where);
 

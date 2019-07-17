@@ -1,7 +1,7 @@
 <?php
 
 /**
- * BitPay Checkout Callback 3.0.1.2
+ * BitPay Checkout Callback 3.0.1.3
  *
  * This file demonstrates how a payment gateway callback should be
  * handled within WHMCS.
@@ -112,7 +112,7 @@ if ($success) {
 $pending_lbl = 'Payment Pending';
 
 $table = "tblinvoices";
-$update = array("status" => $pending_lbl);
+$update = array("status" => $pending_lbl,'datepaid' => date("Y-m-d H:i:s"));
 $where = array("id" => $all_data->data->orderId, "paymentmethod" => "bitpaycheckout");
 update_query($table, $update, $where);
 

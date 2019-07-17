@@ -1,6 +1,6 @@
 <?php
 /**
- * BitPay Checkout 3.0.1.2
+ * BitPay Checkout 3.0.1.3
  *
  * Within the module itself, all functions must be prefixed with the module
  * filename, followed by an underscore, and then the function name. For this
@@ -54,7 +54,7 @@ function bitpaycheckout_MetaData()
 {
     return array(
         'DisplayName' => 'BitPay_Checkout_WHCMS',
-        'APIVersion' => '3.0.1.0', // Use API Version 1.1
+        'APIVersion' => '3.0.1.3', // Use API Version 1.1
         'DisableLocalCreditCardInput' => false,
         'TokenisedStorage' => false,
     );
@@ -108,43 +108,14 @@ function bitpaycheckout_config()
             'Default' => '',
             'Description' => 'Your <b>production</b> merchant token.  <a href = "https://www.bitpay.com/dashboard/merchant/api-tokens" target = "_blank">Create one here</a> and <b>uncheck</b> `Require Authentication`.',
         ),
-        /*
-        'bitpay_checkout_risk' => array(
-            'FriendlyName' => 'Risk Mitigation',
-            'Type' => 'dropdown',
-            'Options' => 'Default,High,Medium,Low',
-            'Description' => '
-            <ul>
-            <li> <b>High</b>: The merchant takes the risk to dispatch orders where the payment has not yet been confirmed by BitPay.</li>
-            <li> <b>Medium</b>: The merchant decides to dispatch orders where the BitPay invoice has been set to “confirmed” by BitPay (for instance, with a Bitcoin payment, this is equivalent to 1 block confirmation). This is the default option and best trade off in terms of consumer experience versus security.</li>
-            <li> <b>Low</b>: The merchant decides to dispatch orders where the BitPay invoice has been set to “complete” by BitPay (for instance, with a Bitcoin payment, this is equivalent to 6 block confirmation). This is the most secure option but it requires the consumer to wait about 1 hour to get the order confirmation.
-            (note: this parameter is also called “transaction speed” in our system)</li>
-            <li> <b>Default</b>: This will use the default setting in your Dashboard (<b><i>medium</i></b>)</li>
-            
-            </ul>',
-        ),
        
-        'bitpay_checkout_dateformat' => array(
-            'FriendlyName' => 'Date Format',
-            'Type' => 'dropdown',
-            'Options' => 'Y-m-d,d-m-Y',
-            'Description' => 'By default, the date will be formatted as Y-m-d (2019-05-31).  d-m-Y will format to (05-31-2019)',
-        ),
-        */
             'bitpay_checkout_endpoint' => array(
             'FriendlyName' => 'Endpoint',
             'Type' => 'dropdown',
             'Options' => 'Test,Production',
             'Description' => 'Select <b>Test</b> for testing the plugin, <b>Production</b> when you are ready to go live.<br>',
         ),
-        /*
-        'bitpay_checkout_logging' => array(
-            'FriendlyName' => 'Error Logging',
-            'Type' => 'radio',
-            'Options' => 'Yes, No',
-            'Description' => 'If <b>Yes</b>, BitPay will log the invoice data (Invoice ID, API endpoint, etc) to your server\'s error log.<br>',
-        ),
-        */
+        
 
     );
 }
@@ -232,8 +203,8 @@ function bitpaycheckout_link($config_params)
     if ($dir == '/') {
         $dir = '';
     }
-    $protocol = stripos($_SERVER['SERVER_PROTOCOL'], 'https') === true ? 'https://' : 'http://';
-
+   #$protocol = stripos($_SERVER['SERVER_PROTOCOL'], 'https') === true ? 'https://' : 'http://';
+    $protocol = 'https://';
     $callback_url = $protocol . $_SERVER['SERVER_NAME'] . $dir . '/modules/gateways/bitpaycheckout/bitpaycheckout_callback.php';
     $params->extension_version = bitpaycheckout_MetaData();
     $params->extension_version = $params->extension_version['DisplayName'] . '_' . $params->extension_version['APIVersion'];
@@ -302,6 +273,13 @@ function bitpaycheckout_link($config_params)
 <script type='text/javascript'>
 function showModal(invoiceData) {
     $post_url = '<?php echo $callback_url; ?>'
+    $idx = $post_url.indexOf('https')
+
+    if($idx == -1 && location.protocol == 'https:'){
+        $post_url = $post_url.replace('http','https')
+    }
+    
+    
     $encodedData = invoiceData
     invoiceData = atob(invoiceData);
 
