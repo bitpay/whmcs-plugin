@@ -1,6 +1,6 @@
 <?php
 /**
- * BitPay Checkout 3.0.1.3
+ * BitPay Checkout 3.0.1.4
  *
  * Within the module itself, all functions must be prefixed with the module
  * filename, followed by an underscore, and then the function name. For this
@@ -54,7 +54,7 @@ function bitpaycheckout_MetaData()
 {
     return array(
         'DisplayName' => 'BitPay_Checkout_WHCMS',
-        'APIVersion' => '3.0.1.3', // Use API Version 1.1
+        'APIVersion' => '3.0.1.4', // Use API Version 1.1
         'DisableLocalCreditCardInput' => false,
         'TokenisedStorage' => false,
     );
@@ -134,7 +134,8 @@ spl_autoload_register('BPC_autoloader');
 
 function bitpaycheckout_link($config_params)
 {
-    $curpage = $_SERVER['SCRIPT_NAME'];
+    $curpage = basename($_SERVER["SCRIPT_FILENAME"]);
+    
     $curpage = str_replace("/", "", $curpage);
     if ($curpage != 'viewinvoice.php'): return;endif;
     ?>
