@@ -1,6 +1,6 @@
 <?php
 /**
- * BitPay Checkout 3.0.1.4
+ * BitPay Checkout 3.0.1.5
  *
  * Within the module itself, all functions must be prefixed with the module
  * filename, followed by an underscore, and then the function name. For this
@@ -54,7 +54,7 @@ function bitpaycheckout_MetaData()
 {
     return array(
         'DisplayName' => 'BitPay_Checkout_WHCMS',
-        'APIVersion' => '3.0.1.4', // Use API Version 1.1
+        'APIVersion' => '3.0.1.5', // Use API Version 1.1
         'DisableLocalCreditCardInput' => false,
         'TokenisedStorage' => false,
     );

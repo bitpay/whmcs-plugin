@@ -1,7 +1,7 @@
 <?php
 
 /**
- * BitPay Checkout IPN 3.0.1.4
+ * BitPay Checkout IPN 3.0.1.5
  *
  * This file demonstrates how a payment gateway callback should be
  * handled within WHMCS.
@@ -55,7 +55,7 @@ $btn_id = $rowdata['transaction_id'];
 if($btn_id):
 switch ($event['name']) {
      #complete, update invoice table to Paid
-     case 'invoice_confirmed':
+     case 'invoice_completed':
      
         $table = "tblinvoices";
         $update = array("status" => 'Paid','datepaid' => date("Y-m-d H:i:s"));
