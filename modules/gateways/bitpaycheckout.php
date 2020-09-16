@@ -1,6 +1,6 @@
 <?php
 /**
- * BitPay Checkout 3.0.1.5
+ * BitPay Checkout 3.0.1.6
  *
  * Within the module itself, all functions must be prefixed with the module
  * filename, followed by an underscore, and then the function name. For this
@@ -54,7 +54,7 @@ function bitpaycheckout_MetaData()
 {
     return array(
         'DisplayName' => 'BitPay_Checkout_WHCMS',
-        'APIVersion' => '3.0.1.5', // Use API Version 1.1
+        'APIVersion' => '3.0.1.6', // Use API Version 1.1
         'DisableLocalCreditCardInput' => false,
         'TokenisedStorage' => false,
     );
@@ -206,6 +206,7 @@ function bitpaycheckout_link($config_params)
     }
    #$protocol = stripos($_SERVER['SERVER_PROTOCOL'], 'https') === true ? 'https://' : 'http://';
     $protocol = 'https://';
+
     $callback_url = $protocol . $_SERVER['SERVER_NAME'] . $dir . '/modules/gateways/bitpaycheckout/bitpaycheckout_callback.php';
     $params->extension_version = bitpaycheckout_MetaData();
     $params->extension_version = $params->extension_version['DisplayName'] . '_' . $params->extension_version['APIVersion'];
@@ -275,7 +276,6 @@ function bitpaycheckout_link($config_params)
 function showModal(invoiceData) {
     $post_url = '<?php echo $callback_url; ?>'
     $idx = $post_url.indexOf('https')
-
     if($idx == -1 && location.protocol == 'https:'){
         $post_url = $post_url.replace('http','https')
     }
@@ -288,7 +288,7 @@ function showModal(invoiceData) {
     var is_paid = false
     window.addEventListener("message", function(event) {
         payment_status = event.data.status;
-        if(payment_status == 'paid'){
+        if(payment_status == 'paid' || payment_status == 'confirmed' || payment_status == 'complete'){
                 is_paid = true
             }
         if (is_paid == true) {
