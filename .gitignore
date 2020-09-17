@@ -27,3 +27,4 @@
 composer.lock
 composer.phar
 .DS_Store
+modules/gateways/bitpaycheckout/bitpay.txt

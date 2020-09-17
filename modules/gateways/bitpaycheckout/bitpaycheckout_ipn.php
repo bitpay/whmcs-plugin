@@ -1,7 +1,7 @@
 <?php
 
 /**
- * BitPay Checkout IPN 3.0.1.6
+ * BitPay Checkout IPN 3.0.1.7
  *
  * This file demonstrates how a payment gateway callback should be
  * handled within WHMCS.
@@ -22,6 +22,16 @@ require_once  '../../../init.php';
 require_once  '../../../includes/gatewayfunctions.php';
 require_once  '../../../includes/invoicefunctions.php';
 
+function checkInvoiceStatus($url){
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, $url);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-Type: application/json'));
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    $result = curl_exec($ch);
+    curl_close($ch);
+    return $result;
+}
+
 $all_data = json_decode(file_get_contents("php://input"), true);
 $file = 'bitpay.txt';
 
@@ -40,6 +50,13 @@ $order_status = $data['status'];
 $order_invoice = $data['id'];
 
 $price = $data['price'];
+
+$url_check = str_replace("invoice?id=","invoices/",$data['url']);
+$invoiceStatus = json_decode(checkInvoiceStatus($url_check));
+if($order_status != $invoiceStatus->data->status):
+    #ipn doesnt match data, stop
+    die();
+endif;
 
 #first see if the ipn matches
 #get the user id first
