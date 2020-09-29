@@ -1,7 +1,7 @@
 <?php
 
 /**
- * BitPay Checkout Callback 3.0.1.7
+ * BitPay Checkout Callback 3.0.1.8
  *
  * This file demonstrates how a payment gateway callback should be
  * handled within WHMCS.
@@ -97,13 +97,6 @@ if ($success) {
      * @param float $paymentFee      Payment fee (optional)
      * @param string $gatewayModule  Gateway module name
      */
-    addInvoicePayment(
-        $invoiceId,
-        $transactionId,
-        $paymentAmount,
-        $paymentFee,
-        $gatewayModuleName
-    );
 
     
 
