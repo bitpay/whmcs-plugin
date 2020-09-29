@@ -1,7 +1,7 @@
 <?php
 
 /**
- * BitPay Checkout IPN 3.0.1.7
+ * BitPay Checkout IPN 3.0.1.8
  *
  * This file demonstrates how a payment gateway callback should be
  * handled within WHMCS.
@@ -22,6 +22,11 @@ require_once  '../../../init.php';
 require_once  '../../../includes/gatewayfunctions.php';
 require_once  '../../../includes/invoicefunctions.php';
 
+// Detect module name from filename.
+$gatewayModuleName = 'bitpaycheckout';
+// Fetch gateway configuration parameters.
+$gatewayParams = getGatewayVariables($gatewayModuleName);
+
 function checkInvoiceStatus($url){
     $ch = curl_init();
     curl_setopt($ch, CURLOPT_URL, $url);
@@ -41,22 +46,25 @@ file_put_contents($file,print_r($all_data, true),FILE_APPEND);
 file_put_contents($file,"===========END OF IPN===========================",FILE_APPEND);
     
 $data = $all_data['data'];
-$event = $all_data['event'];
-
-
-$orderid = $data['orderId'];
-
 $order_status = $data['status'];
 $order_invoice = $data['id'];
+$endpoint = $gatewayParams['bitpay_checkout_endpoint'];
 
-$price = $data['price'];
-
-$url_check = str_replace("invoice?id=","invoices/",$data['url']);
+if($endpoint == "Test"):
+    $url_check = 'https://test.bitpay.com/invoices/'.$order_invoice;
+else:
+    $url_check = 'https://www.bitpay.com/invoices/'.$order_invoice;
+endif;
 $invoiceStatus = json_decode(checkInvoiceStatus($url_check));
+
 if($order_status != $invoiceStatus->data->status):
     #ipn doesnt match data, stop
     die();
 endif;
+
+$event = $all_data['event'];
+$orderid = $invoiceStatus->data->orderId;
+$price = $invoiceStatus->data->price;
 
 #first see if the ipn matches
 #get the user id first
@@ -67,8 +75,6 @@ $where = array("order_id" => $orderid,"transaction_id" => $order_invoice);
 $result = select_query($table, $fields, $where);
 $rowdata = mysql_fetch_array($result);
 $btn_id = $rowdata['transaction_id'];
-
-
 if($btn_id):
 switch ($event['name']) {
      #complete, update invoice table to Paid
@@ -94,6 +100,14 @@ switch ($event['name']) {
          file_put_contents($file,$e,FILE_APPEND);
       }
 
+      addInvoicePayment(
+        $orderid,
+        $order_invoice,
+        $price,
+        0,
+        'bitpaycheckout'
+    );
+
      break;
      
      #processing - put in Payment Pending
@@ -116,8 +130,6 @@ switch ($event['name']) {
         }catch (Exception $e ){
          file_put_contents($file,$e,FILE_APPEND);
       }
-
-
      break;
      
      #confirmation error - put in Unpaid
