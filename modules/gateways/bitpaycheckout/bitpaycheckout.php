@@ -1,6 +1,6 @@
 <?php
 /**
- * BitPay Checkout 3.0.1.8
+ * BitPay Checkout 3.0.1.9
  *
  * Within the module itself, all functions must be prefixed with the module
  * filename, followed by an underscore, and then the function name. For this
@@ -54,7 +54,7 @@ function bitpaycheckout_MetaData()
 {
     return array(
         'DisplayName' => 'BitPay_Checkout_WHMCS',
-        'APIVersion' => '3.0.1.8', // Use API Version 1.1
+        'APIVersion' => '3.0.1.9', // Use API Version 1.1
         'DisableLocalCreditCardInput' => false,
         'TokenisedStorage' => false,
     );
@@ -115,6 +115,12 @@ function bitpaycheckout_config()
             'Options' => 'Test,Production',
             'Description' => 'Select <b>Test</b> for testing the plugin, <b>Production</b> when you are ready to go live.<br>',
         ),
+        'bitpay_checkout_mode' => array(
+            'FriendlyName' => 'Payment UX',
+            'Type' => 'dropdown',
+            'Options' => 'Modal,Redirect',
+            'Description' => 'Select <b>Modal</b> to keep the user on the invoice page, or  <b>Redirect</b> to have them view the invoice at BitPay.com, and be redirected after payment.<br>',
+        ),
         
 
     );
@@ -168,6 +174,7 @@ function bitpaycheckout_link($config_params)
     $moduleDisplayName = $config_params['name'];
     $moduleName = $config_params['paymentmethod'];
 
+
     $whmcsVersion = $config_params['whmcsVersion'];
     $postfields = array();
     $postfields['username'] = $username;
@@ -194,8 +201,13 @@ function bitpaycheckout_link($config_params)
     #BITPAY INVOICE DETAILS
     $wh = new BPC_Wh();
     $config_params['bitpay_checkout_endpoint'] = strtolower($config_params['bitpay_checkout_endpoint']);
+    $config_params['bitpay_checkout_mode'] = strtolower($config_params['bitpay_checkout_mode']);
+
+
     $bitpay_checkout_token = $wh->BPC_getBitPayToken($config_params['bitpay_checkout_endpoint'], $config_params);
     $bitpay_checkout_endpoint = $config_params['bitpay_checkout_endpoint'];
+    $bitpay_checkout_mode = $config_params['bitpay_checkout_mode'];
+
 
     $config = new BPC_Configuration($bitpay_checkout_token, $config_params['bitpay_checkout_endpoint']);
 
@@ -215,7 +227,7 @@ function bitpaycheckout_link($config_params)
     $params->orderId = trim($invoiceId);
 
     $params->notificationURL = $protocol . $_SERVER['SERVER_NAME'] . $dir . '/modules/gateways/bitpaycheckout/bitpaycheckout_ipn.php';
-    $params->redirectURL = $params->notificationURL;
+    $params->redirectURL = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]";
 
     $params->extendedNotifications = true;
     
@@ -235,9 +247,12 @@ function bitpaycheckout_link($config_params)
     $invoice->BPC_createInvoice();
     $invoiceData = json_decode($invoice->BPC_getInvoiceData());
     $invoiceID = $invoiceData->data->id;
+
+    
+
         error_log("=======USER LOADED BITPAY CHECKOUT INVOICE=====");
         error_log(date('d.m.Y H:i:s'));
-        error_log(print_r($invoiceData, true));
+       # error_log(print_r($invoiceData, true));
         error_log("=======END OF INVOICE==========================");
         error_log(print_r($params,true));
     
@@ -267,12 +282,20 @@ function bitpaycheckout_link($config_params)
         error_log($e->getMessage());
         $pdo->rollBack();
     }
-
+    if($bitpay_checkout_mode == 'modal'):
     $htmlOutput .= '<button name = "bitpay-payment" class = "btn btn-success btn-sm" onclick = "showModal(\'' . base64_encode($invoice->BPC_getInvoiceData()) . '\');return false;">' . $langPayNow . '</button>';
+    else:
+        $htmlOutput .= '<button name = "bitpay-payment" class = "btn btn-success btn-sm" onclick = "redirectURL(\'' . $invoiceData->data->url. '\');return false;">' . $langPayNow . '</button>';
 
+    endif;
     ?>
 
+
+
 <script type='text/javascript'>
+function redirectURL($url){
+    window.location=$url;
+}
 function showModal(invoiceData) {
     $post_url = '<?php echo $callback_url; ?>'
     $idx = $post_url.indexOf('https')
