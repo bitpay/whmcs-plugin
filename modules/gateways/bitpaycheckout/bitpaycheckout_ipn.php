@@ -53,7 +53,7 @@ $endpoint = $gatewayParams['bitpay_checkout_endpoint'];
 if($endpoint == "Test"):
     $url_check = 'https://test.bitpay.com/invoices/'.$order_invoice;
 else:
-    $url_check = 'https://www.bitpay.com/invoices/'.$order_invoice;
+    $url_check = 'https://bitpay.com/invoices/'.$order_invoice;
 endif;
 $invoiceStatus = json_decode(checkInvoiceStatus($url_check));
 
