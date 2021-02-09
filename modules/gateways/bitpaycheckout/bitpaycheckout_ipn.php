@@ -69,17 +69,20 @@ $price = $invoiceStatus->data->price;
 #first see if the ipn matches
 #get the user id first
 $table = "_bitpay_checkout_transactions";
-$fields = "order_id,transaction_id";
+$fields = "order_id,transaction_id,transaction_status";
 $where = array("order_id" => $orderid,"transaction_id" => $order_invoice);
 
 $result = select_query($table, $fields, $where);
 $rowdata = mysql_fetch_array($result);
 $btn_id = $rowdata['transaction_id'];
+$transaction_status = $rowdata['transaction_status'];
 if($btn_id):
 switch ($event['name']) {
      #complete, update invoice table to Paid
      case 'invoice_completed':
-     
+      if ($transaction_status == $event['name']) {
+         exit();
+      }
         $table = "tblinvoices";
         $update = array("status" => 'Paid','datepaid' => date("Y-m-d H:i:s"));
         $where = array("id" => $orderid, "paymentmethod" => "bitpaycheckout");
