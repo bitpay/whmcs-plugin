@@ -1,7 +1,7 @@
 <?php
 
 /**
- * BitPay Checkout IPN 3.0.1.9
+ * BitPay Checkout IPN 3.1.0.0
  *
  * This file demonstrates how a payment gateway callback should be
  * handled within WHMCS.
@@ -198,4 +198,5 @@ switch ($event['name']) {
 
      break;
 }
+http_response_code(200);
 endif;#end of the table lookup
