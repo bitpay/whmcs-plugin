@@ -1,6 +1,6 @@
 <?php
 /**
- * BitPay Checkout IPN 3.1.0.0
+ * BitPay Checkout IPN 3.1.1.0
  *
  * This file demonstrates how a payment gateway callback should be
  * handled within WHMCS.
