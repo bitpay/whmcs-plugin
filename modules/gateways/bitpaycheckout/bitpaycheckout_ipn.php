@@ -1,5 +1,4 @@
 <?php
-
 /**
  * BitPay Checkout IPN 3.1.0.0
  *
@@ -49,18 +48,12 @@ $data = $all_data['data'];
 $order_status = $data['status'];
 $order_invoice = $data['id'];
 $endpoint = $gatewayParams['bitpay_checkout_endpoint'];
-
 if($endpoint == "Test"):
     $url_check = 'https://test.bitpay.com/invoices/'.$order_invoice;
 else:
     $url_check = 'https://www.bitpay.com/invoices/'.$order_invoice;
 endif;
 $invoiceStatus = json_decode(checkInvoiceStatus($url_check));
-
-if($order_status != $invoiceStatus->data->status):
-    #ipn doesnt match data, stop
-    die();
-endif;
 
 $event = $all_data['event'];
 $orderid = $invoiceStatus->data->orderId;
@@ -75,10 +68,14 @@ $where = array("order_id" => $orderid,"transaction_id" => $order_invoice);
 $result = select_query($table, $fields, $where);
 $rowdata = mysql_fetch_array($result);
 $btn_id = $rowdata['transaction_id'];
+$status_arr = ['confirmed','complete'];
+
 if($btn_id):
 switch ($event['name']) {
      #complete, update invoice table to Paid
      case 'invoice_completed':
+
+        if(in_array($order_status,$status_arr) && $order_status == "complete"):
      
         $table = "tblinvoices";
         $update = array("status" => 'Paid','datepaid' => date("Y-m-d H:i:s"));
@@ -107,6 +104,8 @@ switch ($event['name']) {
         0,
         'bitpaycheckout'
     );
+    endif;  
+
 
      break;
      
