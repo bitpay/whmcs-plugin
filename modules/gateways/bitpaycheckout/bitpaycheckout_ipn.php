@@ -1,6 +1,6 @@
 <?php
 /**
- * BitPay Checkout IPN 3.1.1.0
+ * BitPay Checkout IPN 4.0.1
  *
  * This file demonstrates how a payment gateway callback should be
  * handled within WHMCS.
@@ -38,6 +38,7 @@ function checkInvoiceStatus($url){
 
 $all_data = json_decode(file_get_contents("php://input"), true);
 $file = 'bitpay.txt';
+$err = "bitpay_err.txt";
 
 file_put_contents($file,"===========INCOMING IPN=========================",FILE_APPEND);
 file_put_contents($file,date('d.m.Y H:i:s'),FILE_APPEND);
@@ -68,14 +69,12 @@ $where = array("order_id" => $orderid,"transaction_id" => $order_invoice);
 $result = select_query($table, $fields, $where);
 $rowdata = mysql_fetch_array($result);
 $btn_id = $rowdata['transaction_id'];
-$status_arr = ['confirmed','complete'];
 
 if($btn_id):
 switch ($event['name']) {
      #complete, update invoice table to Paid
-     case 'invoice_completed':
+     case 'invoice_confirmed':
 
-        if(in_array($order_status,$status_arr) && $order_status == "complete"):
      
         $table = "tblinvoices";
         $update = array("status" => 'Paid','datepaid' => date("Y-m-d H:i:s"));
@@ -84,7 +83,7 @@ switch ($event['name']) {
         update_query($table, $update, $where);
         }
         catch (Exception $e ){
-         file_put_contents($file,$e,FILE_APPEND);
+         file_put_contents($err,$e,FILE_APPEND);
       }
 
         #update the bitpay_invoice table
@@ -94,7 +93,7 @@ switch ($event['name']) {
         try{
         update_query($table, $update, $where);
         }catch (Exception $e ){
-         file_put_contents($file,$e,FILE_APPEND);
+         file_put_contents($err,$e,FILE_APPEND);
       }
 
       addInvoicePayment(
@@ -104,9 +103,6 @@ switch ($event['name']) {
         0,
         'bitpaycheckout'
     );
-    endif;  
-
-
      break;
      
      #processing - put in Payment Pending
@@ -133,6 +129,8 @@ switch ($event['name']) {
      
      #confirmation error - put in Unpaid
      case 'invoice_failedToConfirm':
+     case 'invoice_declined':
+
         $table = "tblinvoices";
         $update = array("status" => 'Unpaid');
         $where = array("id" => $orderid, "paymentmethod" => "bitpaycheckout");
