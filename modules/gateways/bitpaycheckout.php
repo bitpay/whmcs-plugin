@@ -1,6 +1,6 @@
 <?php
 /**
- * BitPay Checkout 4.0.1
+ * BitPay Checkout 4.0.2
  *
  * Within the module itself, all functions must be prefixed with the module
  * filename, followed by an underscore, and then the function name. For this
@@ -50,15 +50,6 @@ try {
  * @return array
  */
 
-function bitpaycheckout_MetaData()
-{
-    return array(
-        'DisplayName' => 'BitPay_Checkout_WHMCS',
-        'APIVersion' => '4.0.1', // Use API Version 1.1
-        'DisableLocalCreditCardInput' => false,
-        'TokenisedStorage' => false,
-    );
-}
 
 /**
  * Define gateway configuration options.
@@ -83,6 +74,7 @@ function bitpaycheckout_MetaData()
  * @return array
  */
 
+if (!function_exists('bitpaycheckout_config')) {
 function bitpaycheckout_config()
 {
     return array(
@@ -124,6 +116,7 @@ function bitpaycheckout_config()
         
 
     );
+}
 }
 
 function BPC_autoloader($class)
@@ -220,20 +213,16 @@ function bitpaycheckout_link($config_params)
     $protocol = 'https://';
 
     $callback_url = $protocol . $_SERVER['SERVER_NAME'] . $dir . '/modules/gateways/bitpaycheckout/bitpaycheckout_callback.php';
-    $params->extension_version = bitpaycheckout_MetaData();
-    $params->extension_version = $params->extension_version['DisplayName'] . '_' . $params->extension_version['APIVersion'];
+    $params->extension_version = "BitPay_Checkout_WHMCS_4.0.2";
     $params->price = $amount;
     $params->currency = $currencyCode;
     $params->orderId = trim($invoiceId);
 
     $params->notificationURL = $protocol . $_SERVER['SERVER_NAME'] . $dir . '/modules/gateways/bitpaycheckout/bitpaycheckout_ipn.php';
     $params->redirectURL = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]";
-
-    $params->extendedNotifications = true;
+    $params->fullNotifications = true;
+    #$params->extendedNotifications = true;
     
-    #set the transaction speed in the plugin and override the plugin
-    
-    $params->acceptanceWindow = 1200000;
     if (!empty($email)):
         $buyerInfo = new stdClass();
         $buyerInfo->name = $firstname . ' ' . $lastname;
@@ -322,7 +311,7 @@ function showModal(invoiceData) {
                 data: $encodedData,
                 dataType: "text",
                 success: function(resultData) {
-                    location.reload();
+                    window.location.reload();
                 },
                 error: function(resultData) {
                     //console.log('error', resultData)

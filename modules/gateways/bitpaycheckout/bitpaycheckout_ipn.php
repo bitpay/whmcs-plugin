@@ -1,6 +1,6 @@
 <?php
 /**
- * BitPay Checkout IPN 4.0.1
+ * BitPay Checkout IPN 4.0.2
  *
  * This file demonstrates how a payment gateway callback should be
  * handled within WHMCS.
@@ -36,18 +36,17 @@ function checkInvoiceStatus($url){
     return $result;
 }
 
-$all_data = json_decode(file_get_contents("php://input"), true);
+$event = json_decode(file_get_contents("php://input"), true);
 $file = 'bitpay.txt';
 $err = "bitpay_err.txt";
 
 file_put_contents($file,"===========INCOMING IPN=========================",FILE_APPEND);
 file_put_contents($file,date('d.m.Y H:i:s'),FILE_APPEND);
-file_put_contents($file,print_r($all_data, true),FILE_APPEND);
+file_put_contents($file,print_r($event, true),FILE_APPEND);
 file_put_contents($file,"===========END OF IPN===========================",FILE_APPEND);
     
-$data = $all_data['data'];
-$order_status = $data['status'];
-$order_invoice = $data['id'];
+$order_status = $event['status'];
+$order_invoice = $event['id'];
 $endpoint = $gatewayParams['bitpay_checkout_endpoint'];
 if($endpoint == "Test"):
     $url_check = 'https://test.bitpay.com/invoices/'.$order_invoice;
@@ -56,10 +55,8 @@ else:
 endif;
 $invoiceStatus = json_decode(checkInvoiceStatus($url_check));
 
-$event = $all_data['event'];
 $orderid = $invoiceStatus->data->orderId;
 $price = $invoiceStatus->data->price;
-
 #first see if the ipn matches
 #get the user id first
 $table = "_bitpay_checkout_transactions";
@@ -71,10 +68,9 @@ $rowdata = mysql_fetch_array($result);
 $btn_id = $rowdata['transaction_id'];
 
 if($btn_id):
-switch ($event['name']) {
+switch ($event['status']) {
      #complete, update invoice table to Paid
-     case 'invoice_confirmed':
-
+     case 'complete ':
      
         $table = "tblinvoices";
         $update = array("status" => 'Paid','datepaid' => date("Y-m-d H:i:s"));
@@ -88,7 +84,7 @@ switch ($event['name']) {
 
         #update the bitpay_invoice table
         $table = "_bitpay_checkout_transactions";
-        $update = array("transaction_status" => $event['name']);
+        $update = array("transaction_status" => "complete");
         $where = array("order_id" => $orderid, "transaction_id" => $order_invoice);
         try{
         update_query($table, $update, $where);
@@ -106,7 +102,7 @@ switch ($event['name']) {
      break;
      
      #processing - put in Payment Pending
-     case 'invoice_paidInFull':
+     case 'paid':
         $table = "tblinvoices";
         $update = array("status" => 'Payment Pending','datepaid' => date("Y-m-d H:i:s"));
         $where = array("id" => $orderid, "paymentmethod" => "bitpaycheckout");
@@ -127,33 +123,8 @@ switch ($event['name']) {
       }
      break;
      
-     #confirmation error - put in Unpaid
-     case 'invoice_failedToConfirm':
-     case 'invoice_declined':
-
-        $table = "tblinvoices";
-        $update = array("status" => 'Unpaid');
-        $where = array("id" => $orderid, "paymentmethod" => "bitpaycheckout");
-        try{
-        update_query($table, $update, $where);
-        }catch (Exception $e ){
-         file_put_contents($file,$e,FILE_APPEND);
-      }
-
-        #update the bitpay_invoice table
-        $table = "_bitpay_checkout_transactions";
-        $update = array("transaction_status" => $event['name']);
-        $where = array("order_id" => $orderid, "transaction_id" => $order_invoice);
-        try{
-        update_query($table, $update, $where);
-        }catch (Exception $e ){
-         file_put_contents($file,$e,FILE_APPEND);
-      }
-
-     break;
-     
      #expired, remove from transaction table, wont be in invoice table
-     case 'invoice_expired':
+     case 'expired':
         #delete any orphans
         $table = "_bitpay_checkout_transactions";
         $delete = 'DELETE FROM _bitpay_checkout_transactions WHERE transaction_id = "' . $order_invoice.'"';
@@ -162,37 +133,6 @@ switch ($event['name']) {
         }catch (Exception $e ){
          file_put_contents($file,$e,FILE_APPEND);
       }
-     break;
-     
-     #update both table to refunded
-     case 'invoice_refundComplete':
-
-        #get the user id first
-        $table = "tblaccounts";
-        $fields = "id,userid";
-        $where = array("transid" => $order_invoice);
-        $result = select_query($table, $fields, $where);
-        $rowdata = mysql_fetch_array($result);
-        $id = $rowdata['id'];
-        $userid = $rowdata['userid'];
-
-
-        #do an insert on tblaccounts
-        $values = array("userid" => $userid, "description" => "BitPay Refund of Transaction ID: ".$order_invoice, "amountin" => "0","currency"=>"0","amountout" => $price,"invoiceid" =>$orderid,"date"=>date("Y-m-d H:i:s"));
-        $newid = insert_query($table, $values);
-
-        #update the tblinvoices to show Refunded
-        $table = "tblinvoices";
-        $update = array("status" => 'Refunded','datepaid' => date("Y-m-d H:i:s"));
-        $where = array("id" => $orderid, "paymentmethod" => "bitpaycheckout");
-        update_query($table, $update, $where);
-
-        #update the bitpay_invoice table
-        $table = "_bitpay_checkout_transactions";
-        $update = array("transaction_status" => $event['name']);
-        $where = array("order_id" => $orderid, "transaction_id" => $order_invoice);
-        update_query($table, $update, $where);
-
      break;
 }
 http_response_code(200);
