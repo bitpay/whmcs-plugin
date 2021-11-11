@@ -1,4 +1,5 @@
 <?php
+
 /**
  * BitPay Checkout IPN 4.0.2
  *
@@ -36,17 +37,19 @@ function checkInvoiceStatus($url){
     return $result;
 }
 
-$event = json_decode(file_get_contents("php://input"), true);
+$all_data = json_decode(file_get_contents("php://input"), true);
+$data = $all_data['data'];
+
 $file = 'bitpay.txt';
 $err = "bitpay_err.txt";
 
 file_put_contents($file,"===========INCOMING IPN=========================",FILE_APPEND);
 file_put_contents($file,date('d.m.Y H:i:s'),FILE_APPEND);
-file_put_contents($file,print_r($event, true),FILE_APPEND);
+file_put_contents($file,print_r($all_data, true),FILE_APPEND);
 file_put_contents($file,"===========END OF IPN===========================",FILE_APPEND);
     
-$order_status = $event['status'];
-$order_invoice = $event['id'];
+$order_status = $data['status'];
+$order_invoice = $data['id'];
 $endpoint = $gatewayParams['bitpay_checkout_endpoint'];
 if($endpoint == "Test"):
     $url_check = 'https://test.bitpay.com/invoices/'.$order_invoice;
@@ -70,7 +73,7 @@ $btn_id = $rowdata['transaction_id'];
 if($btn_id):
 switch ($event['status']) {
      #complete, update invoice table to Paid
-     case 'complete ':
+     case 'complete':
      
         $table = "tblinvoices";
         $update = array("status" => 'Paid','datepaid' => date("Y-m-d H:i:s"));
@@ -114,7 +117,7 @@ switch ($event['status']) {
 
         #update the bitpay_invoice table
         $table = "_bitpay_checkout_transactions";
-        $update = array("transaction_status" => $event['name']);
+        $update = array("transaction_status" => 'paid');
         $where = array("order_id" => $orderid, "transaction_id" => $order_invoice);
         try{
         update_query($table, $update, $where);
