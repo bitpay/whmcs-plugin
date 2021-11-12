@@ -37,15 +37,15 @@ function checkInvoiceStatus($url){
     return $result;
 }
 
-$all_data = json_decode(file_get_contents("php://input"), true);
-$data = $all_data['data'];
+$response = json_decode(file_get_contents("php://input"), true);
+$data = $response['data'];
 
 $file = 'bitpay.txt';
 $err = "bitpay_err.txt";
 
 file_put_contents($file,"===========INCOMING IPN=========================",FILE_APPEND);
 file_put_contents($file,date('d.m.Y H:i:s'),FILE_APPEND);
-file_put_contents($file,print_r($all_data, true),FILE_APPEND);
+file_put_contents($file,print_r($response, true),FILE_APPEND);
 file_put_contents($file,"===========END OF IPN===========================",FILE_APPEND);
     
 $order_status = $data['status'];
@@ -71,7 +71,7 @@ $rowdata = mysql_fetch_array($result);
 $btn_id = $rowdata['transaction_id'];
 
 if($btn_id):
-switch ($event['status']) {
+   switch ($data['status']) {
      #complete, update invoice table to Paid
      case 'complete':
      
