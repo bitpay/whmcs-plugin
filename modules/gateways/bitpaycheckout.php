@@ -1,6 +1,6 @@
 <?php
 /**
- * BitPay Checkout 4.0.2
+ * BitPay Checkout 4.2.2111
  *
  * Within the module itself, all functions must be prefixed with the module
  * filename, followed by an underscore, and then the function name. For this
@@ -213,7 +213,7 @@ function bitpaycheckout_link($config_params)
     $protocol = 'https://';
 
     $callback_url = $protocol . $_SERVER['SERVER_NAME'] . $dir . '/modules/gateways/bitpaycheckout/bitpaycheckout_callback.php';
-    $params->extension_version = "BitPay_Checkout_WHMCS_4.0.2";
+    $params->extension_version = "BitPay_Checkout_WHMCS_4.2.2111";
     $params->price = $amount;
     $params->currency = $currencyCode;
     $params->orderId = trim($invoiceId);

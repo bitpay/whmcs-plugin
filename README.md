@@ -6,7 +6,7 @@
 
 This version requires the following:
 
-* WHMCS 7.x
+* WHMCS 7.x | 8.x
 * A BitPay merchant account: 
  * On the [production environment.](https://bitpay.com/dashboard/signup)
  * On the [test environment.](https://test.bitpay.com/dashboard/signup), for sandbox testing.
