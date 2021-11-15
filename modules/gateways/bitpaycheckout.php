@@ -75,48 +75,47 @@ try {
  */
 
 if (!function_exists('bitpaycheckout_config')) {
-function bitpaycheckout_config()
-{
-    return array(
-        // the friendly display name for a payment gateway should be
-        // defined here for backwards compatibility
-        'FriendlyName' => array(
-            'Type' => 'System',
-            'Value' => 'BitPay Checkout',
-        ),
-        // a text field type allows for single line text input
-        'bitpay_checkout_token_dev' => array(
-            'FriendlyName' => 'Development Token',
-            'Type' => 'text',
-            'Size' => '25',
-            'Default' => '',
-            'Description' => 'Your <b>development</b> merchant token.  <a href = "https://test.bitpay.com/dashboard/merchant/api-tokens" target = "_blank">Create one here</a> and <b>uncheck</b> `Require Authentication`.',
-        ),
-        // a text field type allows for single line text input
-        'bitpay_checkout_token_prod' => array(
-            'FriendlyName' => 'Production Token',
-            'Type' => 'text',
-            'Size' => '25',
-            'Default' => '',
-            'Description' => 'Your <b>production</b> merchant token.  <a href = "https://www.bitpay.com/dashboard/merchant/api-tokens" target = "_blank">Create one here</a> and <b>uncheck</b> `Require Authentication`.',
-        ),
-       
-            'bitpay_checkout_endpoint' => array(
-            'FriendlyName' => 'Endpoint',
-            'Type' => 'dropdown',
-            'Options' => 'Test,Production',
-            'Description' => 'Select <b>Test</b> for testing the plugin, <b>Production</b> when you are ready to go live.<br>',
-        ),
-        'bitpay_checkout_mode' => array(
-            'FriendlyName' => 'Payment UX',
-            'Type' => 'dropdown',
-            'Options' => 'Modal,Redirect',
-            'Description' => 'Select <b>Modal</b> to keep the user on the invoice page, or  <b>Redirect</b> to have them view the invoice at BitPay.com, and be redirected after payment.<br>',
-        ),
+    function bitpaycheckout_config()
+    {
+        return array(
+            // the friendly display name for a payment gateway should be
+            // defined here for backwards compatibility
+            'FriendlyName' => array(
+                'Type' => 'System',
+                'Value' => 'BitPay Checkout',
+            ),
+            // a text field type allows for single line text input
+            'bitpay_checkout_token_dev' => array(
+                'FriendlyName' => 'Development Token',
+                'Type' => 'text',
+                'Size' => '25',
+                'Default' => '',
+                'Description' => 'Your <b>development</b> merchant token.  <a href = "https://test.bitpay.com/dashboard/merchant/api-tokens" target = "_blank">Create one here</a> and <b>uncheck</b> `Require Authentication`.',
+            ),
+            // a text field type allows for single line text input
+            'bitpay_checkout_token_prod' => array(
+                'FriendlyName' => 'Production Token',
+                'Type' => 'text',
+                'Size' => '25',
+                'Default' => '',
+                'Description' => 'Your <b>production</b> merchant token.  <a href = "https://www.bitpay.com/dashboard/merchant/api-tokens" target = "_blank">Create one here</a> and <b>uncheck</b> `Require Authentication`.',
+            ),
         
-
-    );
-}
+                'bitpay_checkout_endpoint' => array(
+                'FriendlyName' => 'Endpoint',
+                'Type' => 'dropdown',
+                'Options' => 'Test,Production',
+                'Description' => 'Select <b>Test</b> for testing the plugin, <b>Production</b> when you are ready to go live.<br>',
+            ),
+            'bitpay_checkout_mode' => array(
+                'FriendlyName' => 'Payment UX',
+                'Type' => 'dropdown',
+                'Options' => 'Modal,Redirect',
+                'Description' => 'Select <b>Modal</b> to keep the user on the invoice page, or  <b>Redirect</b> to have them view the invoice at BitPay.com, and be redirected after payment.<br>',
+            ),
+            
+        );
+    }
 }
 
 function BPC_autoloader($class)
@@ -138,10 +137,10 @@ function bitpaycheckout_link($config_params)
     $curpage = str_replace("/", "", $curpage);
     if ($curpage != 'viewinvoice.php'): return;endif;
     ?>
-<script src="//bitpay.com/bitpay.min.js" type="text/javascript"></script>
-<script src="//ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script src="//bitpay.com/bitpay.min.js" type="text/javascript"></script>
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
 
-<?php
+    <?php
 
     // Invoice Parameters
     $invoiceId = $config_params['invoiceid'];
@@ -170,7 +169,6 @@ function bitpaycheckout_link($config_params)
 
     $whmcsVersion = $config_params['whmcsVersion'];
     $postfields = array();
-    $postfields['username'] = $username;
     $postfields['invoice_id'] = $invoiceId;
     $postfields['description'] = $description;
     $postfields['amount'] = $amount;
@@ -186,7 +184,7 @@ function bitpaycheckout_link($config_params)
     $postfields['country'] = $country;
     $postfields['phone'] = $phone;
     $postfields['return_url'] = $returnUrl;
-    $htmlOutput = '<form method="post" action="' . $url . '">';
+    $htmlOutput = '<form method="post" action="">';
     foreach ($postfields as $k => $v) {
         $htmlOutput .= '<input type="hidden" name="' . $k . '" value="' . urlencode($v) . '" />';
     }
@@ -209,7 +207,7 @@ function bitpaycheckout_link($config_params)
     if ($dir == '/') {
         $dir = '';
     }
-   #$protocol = stripos($_SERVER['SERVER_PROTOCOL'], 'https') === true ? 'https://' : 'http://';
+    #$protocol = stripos($_SERVER['SERVER_PROTOCOL'], 'https') === true ? 'https://' : 'http://';
     $protocol = 'https://';
 
     $callback_url = $protocol . $_SERVER['SERVER_NAME'] . $dir . '/modules/gateways/bitpaycheckout/bitpaycheckout_callback.php';
@@ -237,22 +235,18 @@ function bitpaycheckout_link($config_params)
     $invoiceData = json_decode($invoice->BPC_getInvoiceData());
     $invoiceID = $invoiceData->data->id;
 
-    
-
-        error_log("=======USER LOADED BITPAY CHECKOUT INVOICE=====");
-        error_log(date('d.m.Y H:i:s'));
-       # error_log(print_r($invoiceData, true));
-        error_log("=======END OF INVOICE==========================");
-        error_log(print_r($params,true));
+    error_log("=======USER LOADED BITPAY CHECKOUT INVOICE=====");
+    error_log(date('d.m.Y H:i:s'));
+    # error_log(print_r($invoiceData, true));
+    error_log("=======END OF INVOICE==========================");
+    error_log(print_r($params,true));
     
     #insert into the database
     $pdo = Capsule::connection()->getPdo();
     $pdo->beginTransaction();
-   
+
     $created_at = 'Y-m-d';
     
-
-
     try {
         $statement = $pdo->prepare(
             'insert into _bitpay_checkout_transactions (order_id, transaction_id, transaction_status,created_at) values (:order_id, :transaction_id, :transaction_status,:created_at)'
@@ -272,63 +266,59 @@ function bitpaycheckout_link($config_params)
         $pdo->rollBack();
     }
     if($bitpay_checkout_mode == 'modal'):
-    $htmlOutput .= '<button name = "bitpay-payment" class = "btn btn-success btn-sm" onclick = "showModal(\'' . base64_encode($invoice->BPC_getInvoiceData()) . '\');return false;">' . $langPayNow . '</button>';
+        $htmlOutput .= '<button name = "bitpay-payment" class = "btn btn-success btn-sm" onclick = "showModal(\'' . base64_encode($invoice->BPC_getInvoiceData()) . '\');return false;">' . $langPayNow . '</button>';
     else:
         $htmlOutput .= '<button name = "bitpay-payment" class = "btn btn-success btn-sm" onclick = "redirectURL(\'' . $invoiceData->data->url. '\');return false;">' . $langPayNow . '</button>';
 
     endif;
     ?>
 
-
-
-<script type='text/javascript'>
-function redirectURL($url){
-    window.location=$url;
-}
-function showModal(invoiceData) {
-    $post_url = '<?php echo $callback_url; ?>'
-    $idx = $post_url.indexOf('https')
-    if($idx == -1 && location.protocol == 'https:'){
-        $post_url = $post_url.replace('http','https')
-    }
-    
-    
-    $encodedData = invoiceData
-    invoiceData = atob(invoiceData);
-
-    var payment_status = null;
-    var is_paid = false
-    window.addEventListener("message", function(event) {
-        payment_status = event.data.status;
-        if(payment_status == 'paid' || payment_status == 'confirmed' || payment_status == 'complete'){
-                is_paid = true
-            }
-        if (is_paid == true) {
-            //just some test stuff
-            var saveData = jQuery.ajax({
-                type: 'POST',
-                url: $post_url,
-                data: $encodedData,
-                dataType: "text",
-                success: function(resultData) {
-                    window.location.reload();
-                },
-                error: function(resultData) {
-                    //console.log('error', resultData)
-                }
-            });
+    <script type='text/javascript'>
+        function redirectURL($url){
+            window.location=$url;
         }
-    }, false);
+        function showModal(invoiceData) {
+            $post_url = '<?php echo $callback_url; ?>'
+            $idx = $post_url.indexOf('https')
+            if($idx == -1 && location.protocol == 'https:'){
+                $post_url = $post_url.replace('http','https')
+            }
+                
+            $encodedData = invoiceData
+            invoiceData = atob(invoiceData);
 
-    //show the modal
-    <?php if ($bitpay_checkout_endpoint == 'test'): ?>
-    bitpay.enableTestMode()
-    <?php endif;?>
-    bitpay.showInvoice('<?php echo $invoiceID; ?>');
-}
-</script>
-<?php
-$htmlOutput .= '</form>';
+            var payment_status = null;
+            var is_paid = false;
+            window.addEventListener("message", function(event) {
+                payment_status = event.data.status;
+                if(payment_status == 'paid' || payment_status == 'confirmed' || payment_status == 'complete'){
+                    is_paid = true
+                }
+                if (is_paid == true) {
+                //just some test stuff
+                    var saveData = jQuery.ajax({
+                        type: 'POST',
+                        url: $post_url,
+                        data: $encodedData,
+                        dataType: "text",
+                        success: function(resultData) {
+                            window.location.reload();
+                        },
+                        error: function(resultData) {
+                            //console.log('error', resultData)
+                        }
+                    });
+                }
+            }, false);
+
+            //show the modal
+            <?php if ($bitpay_checkout_endpoint == 'test'): ?>
+            bitpay.enableTestMode()
+            <?php endif;?>
+            bitpay.showInvoice('<?php echo $invoiceID; ?>');
+        }
+    </script>
+    <?php
+    $htmlOutput .= '</form>';
     return $htmlOutput;
-
 }
