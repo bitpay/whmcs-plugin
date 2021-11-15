@@ -80,16 +80,6 @@ if($btn_id):
             exit();
          }
 
-        $table = "tblinvoices";
-        $update = array("status" => 'Paid','datepaid' => date("Y-m-d H:i:s"));
-        $where = array("id" => $orderid, "paymentmethod" => "bitpaycheckout");
-        try{
-        update_query($table, $update, $where);
-        }
-        catch (Exception $e ){
-         file_put_contents($err,$e,FILE_APPEND);
-      }
-
         #update the bitpay_invoice table
         $table = "_bitpay_checkout_transactions";
         $update = array("transaction_status" => "complete");
