@@ -97,7 +97,7 @@ if (!function_exists('bitpaycheckout_config')) {
                 'Type' => 'text',
                 'Size' => '25',
                 'Default' => '',
-                'Description' => 'Your <b>production</b> merchant token.  <a href = "https://www.bitpay.com/dashboard/merchant/api-tokens" target = "_blank">Create one here</a> and <b>uncheck</b> `Require Authentication`.',
+                'Description' => 'Your <b>production</b> merchant token.  <a href = "https://bitpay.com/dashboard/merchant/api-tokens" target = "_blank">Create one here</a> and <b>uncheck</b> `Require Authentication`.',
             ),
         
                 'bitpay_checkout_endpoint' => array(
