@@ -28,13 +28,13 @@ $gatewayModuleName = 'bitpaycheckout';
 $gatewayParams = getGatewayVariables($gatewayModuleName);
 
 function checkInvoiceStatus($url){
-    $ch = curl_init();
-    curl_setopt($ch, CURLOPT_URL, $url);
-    curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-Type: application/json'));
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    $result = curl_exec($ch);
-    curl_close($ch);
-    return $result;
+   $ch = curl_init();
+   curl_setopt($ch, CURLOPT_URL, $url);
+   curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-Type: application/json'));
+   curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+   $result = curl_exec($ch);
+   curl_close($ch);
+   return $result;
 }
 
 $response = json_decode(file_get_contents("php://input"), true);
@@ -52,9 +52,9 @@ $order_status = $data['status'];
 $order_invoice = $data['id'];
 $endpoint = $gatewayParams['bitpay_checkout_endpoint'];
 if($endpoint == "Test"):
-    $url_check = 'https://test.bitpay.com/invoices/'.$order_invoice;
+   $url_check = 'https://test.bitpay.com/invoices/'.$order_invoice;
 else:
-    $url_check = 'https://bitpay.com/invoices/'.$order_invoice;
+   $url_check = 'https://bitpay.com/invoices/'.$order_invoice;
 endif;
 $invoiceStatus = json_decode(checkInvoiceStatus($url_check));
 
@@ -73,65 +73,65 @@ $transaction_status = $rowdata['transaction_status'];
 
 if($btn_id):
    switch ($data['status']) {
-     #complete, update invoice table to Paid
-     case 'complete':
+      #complete, update invoice table to Paid
+      case 'complete':
      
          if ($transaction_status == $data['status']) {
             exit();
          }
 
-        #update the bitpay_invoice table
-        $table = "_bitpay_checkout_transactions";
-        $update = array("transaction_status" => "complete");
-        $where = array("order_id" => $orderid, "transaction_id" => $order_invoice);
-        try{
-        update_query($table, $update, $where);
-        }catch (Exception $e ){
-         file_put_contents($err,$e,FILE_APPEND);
-      }
+         #update the bitpay_invoice table
+         $table = "_bitpay_checkout_transactions";
+         $update = array("transaction_status" => "complete");
+         $where = array("order_id" => $orderid, "transaction_id" => $order_invoice);
+         try{
+            update_query($table, $update, $where);
+         }catch (Exception $e ){
+            file_put_contents($err,$e,FILE_APPEND);
+         }
 
-      addInvoicePayment(
-        $orderid,
-        $order_invoice,
-        $price,
-        0,
-        'bitpaycheckout'
-    );
-     break;
+         addInvoicePayment(
+            $orderid,
+            $order_invoice,
+            $price,
+            0,
+            'bitpaycheckout'
+         );
+         break;
      
-     #processing - put in Payment Pending
-     case 'paid':
-        $table = "tblinvoices";
-        $update = array("status" => 'Payment Pending','datepaid' => date("Y-m-d H:i:s"));
-        $where = array("id" => $orderid, "paymentmethod" => "bitpaycheckout");
-        try{
-        update_query($table, $update, $where);
-        }catch (Exception $e ){
-         file_put_contents($file,$e,FILE_APPEND);
-      }
+      #processing - put in Payment Pending
+      case 'paid':
+         $table = "tblinvoices";
+         $update = array("status" => 'Payment Pending','datepaid' => date("Y-m-d H:i:s"));
+         $where = array("id" => $orderid, "paymentmethod" => "bitpaycheckout");
+         try{
+            update_query($table, $update, $where);
+         }catch (Exception $e ){
+            file_put_contents($file,$e,FILE_APPEND);
+         }
 
-        #update the bitpay_invoice table
-        $table = "_bitpay_checkout_transactions";
-        $update = array("transaction_status" => 'paid');
-        $where = array("order_id" => $orderid, "transaction_id" => $order_invoice);
-        try{
-        update_query($table, $update, $where);
-        }catch (Exception $e ){
-         file_put_contents($file,$e,FILE_APPEND);
-      }
-     break;
+         #update the bitpay_invoice table
+         $table = "_bitpay_checkout_transactions";
+         $update = array("transaction_status" => 'paid');
+         $where = array("order_id" => $orderid, "transaction_id" => $order_invoice);
+         try{
+            update_query($table, $update, $where);
+         }catch (Exception $e ){
+            file_put_contents($file,$e,FILE_APPEND);
+         }
+         break;
      
-     #expired, remove from transaction table, wont be in invoice table
-     case 'expired':
-        #delete any orphans
-        $table = "_bitpay_checkout_transactions";
-        $delete = 'DELETE FROM _bitpay_checkout_transactions WHERE transaction_id = "' . $order_invoice.'"';
-        try{
-        full_query($delete);
-        }catch (Exception $e ){
-         file_put_contents($file,$e,FILE_APPEND);
-      }
-     break;
-}
+      #expired, remove from transaction table, wont be in invoice table
+      case 'expired':
+         #delete any orphans
+         $table = "_bitpay_checkout_transactions";
+         $delete = 'DELETE FROM _bitpay_checkout_transactions WHERE transaction_id = "' . $order_invoice.'"';
+         try{
+            full_query($delete);
+         }catch (Exception $e ){
+            file_put_contents($file,$e,FILE_APPEND);
+         }
+         break;
+   }
 http_response_code(200);
 endif;#end of the table lookup

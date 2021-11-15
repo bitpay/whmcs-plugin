@@ -85,7 +85,6 @@ checkCbTransID($transactionId);
  * @param string $transactionStatus  Status
  */
 if ($success) {
-
     /**
      * Add Invoice Payment.
      *
@@ -98,28 +97,23 @@ if ($success) {
      * @param string $gatewayModule  Gateway module name
      */
 
-    
+    #update the tblinvoices table
+    #update the table to show Payment Pending until IPN updates
+    $pending_lbl = 'Payment Pending';
 
-#update the tblinvoices table
-#update the table to show Payment Pending until IPN updates
-$pending_lbl = 'Payment Pending';
+    $table = "tblinvoices";
+    $update = array("status" => $pending_lbl,'datepaid' => date("Y-m-d H:i:s"));
+    $where = array("id" => $all_data->data->orderId, "paymentmethod" => "bitpaycheckout");
+    update_query($table, $update, $where);
 
-$table = "tblinvoices";
-$update = array("status" => $pending_lbl,'datepaid' => date("Y-m-d H:i:s"));
-$where = array("id" => $all_data->data->orderId, "paymentmethod" => "bitpaycheckout");
-update_query($table, $update, $where);
+    #update the _bitpay_transactions table
+    $table = "_bitpay_checkout_transactions";
+    $update = array("transaction_status" => "paid","updated_at" => date("Y-m-d H:i:s"));
+    $where = array("order_id" => $all_data->data->orderId, "transaction_id" => $transactionId);
+    update_query($table, $update, $where);
 
-#update the _bitpay_transactions table
-$table = "_bitpay_checkout_transactions";
-$update = array("transaction_status" => "paid","updated_at" => date("Y-m-d H:i:s"));
-$where = array("order_id" => $all_data->data->orderId, "transaction_id" => $transactionId);
-update_query($table, $update, $where);
-
-
-#delete any orphans
-$table = "_bitpay_checkout_transactions";
-$delete = 'DELETE FROM _bitpay_checkout_transactions WHERE order_id = "'.$all_data->data->orderId.'" AND transaction_status = "new"';
-full_query($delete);
-
-
+    #delete any orphans
+    $table = "_bitpay_checkout_transactions";
+    $delete = 'DELETE FROM _bitpay_checkout_transactions WHERE order_id = "'.$all_data->data->orderId.'" AND transaction_status = "new"';
+    full_query($delete);
 }
