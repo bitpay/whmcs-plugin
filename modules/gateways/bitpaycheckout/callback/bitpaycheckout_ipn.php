@@ -49,7 +49,7 @@ file_put_contents($file, '===========INCOMING IPN=========================', FIL
 file_put_contents($file, date('d.m.Y H:i:s'), FILE_APPEND);
 file_put_contents($file, print_r($response, true), FILE_APPEND);
 file_put_contents($file, '===========END OF IPN===========================', FILE_APPEND);
-    
+
 $order_status = $data['status'];
 $order_invoice = $data['id'];
 $endpoint = $gatewayParams['bitpay_checkout_endpoint'];
@@ -59,6 +59,17 @@ if ($endpoint == 'Test') {
     $url_check = PROD_URL . $order_invoice;
 }
 $invoiceStatus = json_decode(checkInvoiceStatus($url_check));
+
+if (!$invoiceStatus || !isset($invoiceStatus->data) || !isset($invoiceStatus->data->status) || !isset($invoiceStatus->data->orderId)) {
+    file_put_contents($err, '===========IPN ERROR=========================', FILE_APPEND);
+    file_put_contents($err, date('d.m.Y H:i:s') . " unable to verify invoice {$order_invoice} with BitPay\n", FILE_APPEND);
+    file_put_contents($err, print_r($response, true), FILE_APPEND);
+    file_put_contents($err, '===========END OF IPN ERROR===========================', FILE_APPEND);
+    http_response_code(400);
+    exit();
+}
+
+$serverStatus = $invoiceStatus->data->status;
 
 $orderid = checkCbInvoiceID($invoiceStatus->data->orderId, 'bitpaycheckout');
 $price = $invoiceStatus->data->price;
@@ -75,10 +86,10 @@ $btn_id = $rowdata['transaction_id'];
 $transaction_status = $rowdata['transaction_status'];
 
 if ($btn_id) {
-    switch ($data['status']) {
+    switch ($serverStatus) {
         // Complete, update invoice table to Paid
         case 'complete':
-            if ($transaction_status == $data['status']) {
+            if ($transaction_status === 'complete') {
                 exit();
             }
 
@@ -104,7 +115,7 @@ if ($btn_id) {
                 'bitpaycheckout'
             );
             break;
-     
+
         // Processing - put in Payment Pending
         case 'paid':
             // Update the invoices table
@@ -135,7 +146,7 @@ if ($btn_id) {
                 file_put_contents($file, $e, FILE_APPEND);
             }
             break;
-     
+
         // Expired, remove from transaction table, wont be in invoice table
         case 'expired':
             // Delete any orphans
