@@ -60,9 +60,16 @@ if ($endpoint == 'Test') {
 }
 $invoiceStatus = json_decode(checkInvoiceStatus($url_check));
 
-if (!$invoiceStatus || !isset($invoiceStatus->data) || !isset($invoiceStatus->data->status) || !isset($invoiceStatus->data->orderId)) {
+$hasInvoice = $invoiceStatus
+    && isset($invoiceStatus->data)
+    && isset($invoiceStatus->data->status)
+    && isset($invoiceStatus->data->orderId)
+    && isset($invoiceStatus->data->price);
+
+if (!$hasInvoice) {
     file_put_contents($err, '===========IPN ERROR=========================', FILE_APPEND);
-    file_put_contents($err, date('d.m.Y H:i:s') . " unable to verify invoice {$order_invoice} with BitPay\n", FILE_APPEND);
+    $msg = date('d.m.Y H:i:s') . " unable to verify invoice {$order_invoice} with BitPay\n";
+    file_put_contents($err, $msg, FILE_APPEND);
     file_put_contents($err, print_r($response, true), FILE_APPEND);
     file_put_contents($err, '===========END OF IPN ERROR===========================', FILE_APPEND);
     http_response_code(400);
