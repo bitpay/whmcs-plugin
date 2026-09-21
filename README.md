@@ -41,3 +41,46 @@ An order note will automatically be added with a link to the BitPay invoice to m
  * After the invoice is paid by the user, it will change to a **Payment Pending** status. 
  * When BitPay finalizes the transaction, it will change to a **Paid** status, and your order will be safe to ship, allow access to downloadable products, etc.
  * If you decide to refund a payment via your BitPay dashboard, the WHMCS invoice status will change to **Refunded** once the refund is executed.
+
+## Content Security Policy
+
+If your site sends a `Content-Security-Policy` header, the payment flow needs a
+few origins allowed. Without them the invoice page still loads, but payment does
+not start. In Modal mode the BitPay window stays on "Please wait" with no error
+shown.
+
+The plugin loads two scripts on the invoice page:
+
+* `https://bitpay.com/bitpay.min.js`
+* `https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js`
+
+With **Payment UX** set to **Modal** it also frames the BitPay invoice. The host
+depends on the **Endpoint** setting. The script always comes from `bitpay.com`,
+even when the endpoint is Test.
+
+Add these sources to your existing policy. Keep whatever your site already needs.
+
+**Modal**
+
+| Directive | Add |
+|---|---|
+| `script-src` | `https://bitpay.com` `https://ajax.googleapis.com` |
+| `frame-src` | `https://bitpay.com` (Production) or `https://test.bitpay.com` (Test) |
+
+**Redirect**
+
+| Directive | Add |
+|---|---|
+| `script-src` | `https://bitpay.com` `https://ajax.googleapis.com` |
+
+There is no frame in Redirect mode, so `frame-src` is not needed.
+
+`connect-src` is not needed in either mode. The payment status is polled inside
+the BitPay frame, on BitPay's own origin, so your policy does not apply to it.
+
+### Finding the right values for your site
+
+If the payment flow breaks and you are not sure which directive is at fault, set
+`Content-Security-Policy-Report-Only` with your current policy instead of
+`Content-Security-Policy`. The browser then reports every violation in the
+console without blocking anything, so you get the full list in one pass.
