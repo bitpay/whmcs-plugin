@@ -39,8 +39,31 @@ function checkInvoiceStatus($url)
     return $result;
 }
 
+/**
+ * The notification tells us what happened. The invoice we fetch back from BitPay
+ * tells us whether that is consistent. BitPay may already be ahead of the event
+ * we are processing, but it must never be behind it.
+ *
+ * Mismatches are recorded through logTransaction so they show up under
+ * Billing > Gateway Log in the admin area.
+ */
+function bitpayStatusAllowed($serverStatus, array $allowed, $eventName, $invoiceId, $payload)
+{
+    if (in_array($serverStatus, $allowed, true)) {
+        return true;
+    }
+
+    $reason = "Ignored {$eventName} for invoice {$invoiceId}: BitPay reports status '{$serverStatus}',"
+        . ' expected one of ' . implode(', ', $allowed);
+    logTransaction('bitpaycheckout', $payload, $reason);
+
+    return false;
+}
+
 $response = json_decode(file_get_contents("php://input"), true);
 $data = $response['data'];
+$event = isset($response['event']) && is_array($response['event']) ? $response['event'] : array();
+$eventName = isset($event['name']) ? $event['name'] : '';
 
 $file = 'bitpay.txt';
 $err = 'bitpay_err.txt';
@@ -93,16 +116,53 @@ $btn_id = $rowdata['transaction_id'];
 $transaction_status = $rowdata['transaction_status'];
 
 if ($btn_id) {
-    switch ($serverStatus) {
-        // Complete, update invoice table to Paid
-        case 'complete':
-            if ($transaction_status === 'complete') {
-                exit();
+    switch ($eventName) {
+        // Paid but not yet confirmed on chain. Park the invoice in Payment Pending.
+        case 'invoice_paidInFull':
+            $allowed = ['paid', 'confirmed', 'complete'];
+            if (!bitpayStatusAllowed($serverStatus, $allowed, $eventName, $order_invoice, $response)) {
+                break;
             }
 
-            // Update the bitpay_invoice table
+            $table = 'tblinvoices';
+            $update = array('status' => 'Payment Pending', 'datepaid' => date('Y-m-d H:i:s'));
+            try {
+                Capsule::table($table)
+                    ->where([
+                        ['id', '=', $orderid],
+                        ['paymentmethod', '=', 'bitpaycheckout'],
+                    ])
+                    ->update($update);
+            } catch (Exception $e) {
+                file_put_contents($file, $e, FILE_APPEND);
+            }
+
             $table = '_bitpay_checkout_transactions';
-            $update = array('transaction_status' => 'complete', 'updated_at' => date('Y-m-d H:i:s'));
+            $update = array('transaction_status' => 'paid', 'updated_at' => date('Y-m-d H:i:s'));
+            try {
+                Capsule::table($table)
+                    ->where([
+                        ['order_id', '=', $orderid],
+                        ['transaction_id', '=', $order_invoice],
+                    ])
+                    ->update($update);
+            } catch (Exception $e) {
+                file_put_contents($file, $e, FILE_APPEND);
+            }
+            break;
+
+        // Enough confirmations for the merchant's transaction speed. Apply the payment.
+        case 'invoice_confirmed':
+            $allowed = ['confirmed', 'complete'];
+            if (!bitpayStatusAllowed($serverStatus, $allowed, $eventName, $order_invoice, $response)) {
+                break;
+            }
+            if (in_array($transaction_status, ['confirmed', 'complete'], true)) {
+                break;
+            }
+
+            $table = '_bitpay_checkout_transactions';
+            $update = array('transaction_status' => 'confirmed', 'updated_at' => date('Y-m-d H:i:s'));
             try {
                 Capsule::table($table)
                     ->where([
@@ -123,11 +183,60 @@ if ($btn_id) {
             );
             break;
 
-        // Processing - put in Payment Pending
-        case 'paid':
-            // Update the invoices table
+        // Settled on BitPay's side. Apply the payment unless invoice_confirmed already did.
+        case 'invoice_completed':
+            $allowed = ['complete'];
+            if (!bitpayStatusAllowed($serverStatus, $allowed, $eventName, $order_invoice, $response)) {
+                break;
+            }
+
+            $alreadyApplied = in_array($transaction_status, ['confirmed', 'complete'], true);
+
+            $table = '_bitpay_checkout_transactions';
+            $update = array('transaction_status' => 'complete', 'updated_at' => date('Y-m-d H:i:s'));
+            try {
+                Capsule::table($table)
+                    ->where([
+                        ['order_id', '=', $orderid],
+                        ['transaction_id', '=', $order_invoice],
+                    ])
+                    ->update($update);
+            } catch (Exception $e) {
+                file_put_contents($file, $e, FILE_APPEND);
+            }
+
+            if (!$alreadyApplied) {
+                addInvoicePayment(
+                    $orderid,
+                    $order_invoice,
+                    $price,
+                    0,
+                    'bitpaycheckout'
+                );
+            }
+            break;
+
+        // Expired, remove from transaction table, wont be in invoice table
+        case 'invoice_expired':
+            $allowed = ['expired'];
+            if (!bitpayStatusAllowed($serverStatus, $allowed, $eventName, $order_invoice, $response)) {
+                break;
+            }
+
+            $table = '_bitpay_checkout_transactions';
+            try {
+                Capsule::table($table)
+                    ->where('transaction_id', '=', $order_invoice)
+                    ->delete();
+            } catch (Exception $e) {
+                file_put_contents($file, $e, FILE_APPEND);
+            }
+            break;
+
+        // Refunded, set invoice and bitpay transaction to refunded status
+        case 'invoice_refundComplete':
             $table = 'tblinvoices';
-            $update = array("status" => 'Payment Pending','datepaid' => date('Y-m-d H:i:s'));
+            $update = array('status' => 'Refunded', 'datepaid' => date('Y-m-d H:i:s'));
             try {
                 Capsule::table($table)
                     ->where([
@@ -139,9 +248,8 @@ if ($btn_id) {
                 file_put_contents($file, $e, FILE_APPEND);
             }
 
-            // Update the bitpay_invoice table
             $table = '_bitpay_checkout_transactions';
-            $update = array('transaction_status' => 'paid', 'updated_at' => date('Y-m-d H:i:s'));
+            $update = array('transaction_status' => 'refunded', 'updated_at' => date('Y-m-d H:i:s'));
             try {
                 Capsule::table($table)
                     ->where([
@@ -154,51 +262,9 @@ if ($btn_id) {
             }
             break;
 
-        // Expired, remove from transaction table, wont be in invoice table
-        case 'expired':
-            // Delete any orphans
-            $table = '_bitpay_checkout_transactions';
-            try {
-                Capsule::table($table)
-                    ->where('transaction_id', '=', $order_invoice)
-                    ->delete();
-            } catch (Exception $e) {
-                file_put_contents($file, $e, FILE_APPEND);
-            }
+        default:
+            logTransaction($gatewayModuleName, $response, "No handler for event '{$eventName}'");
             break;
-
-        // Refunded, set invoice and bitpay transaction to refunded status
-        case 'pending':
-            if ($event['name'] == 'refund_pending') {
-                //update the invoices table
-                $table = 'tblinvoices';
-                $update = array('status' => 'Refunded','datepaid' => date('Y-m-d H:i:s'));
-                try {
-                    Capsule::table($table)
-                        ->where([
-                            ['id', '=', $orderid],
-                            ['paymentmethod', '=', 'bitpaycheckout'],
-                        ])
-                        ->update($update);
-                } catch (Exception $e) {
-                    file_put_contents($file, $e, FILE_APPEND);
-                }
-
-                // Update the bitpay invoice table
-                $table = '_bitpay_checkout_transactions';
-                $update = array('transaction_status' => 'refunded', 'updated_at' => date('Y-m-d H:i:s'));
-                try {
-                    Capsule::table($table)
-                        ->where([
-                            ['order_id', '=', $orderid],
-                            ['transaction_id', '=', $order_invoice],
-                        ])
-                        ->update($update);
-                } catch (Exception $e) {
-                    file_put_contents($file, $e, FILE_APPEND);
-                }
-                break;
-            }
     }
 
     http_response_code(200);
