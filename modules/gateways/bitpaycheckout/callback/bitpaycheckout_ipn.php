@@ -60,6 +60,29 @@ function bitpayStatusAllowed($serverStatus, array $allowed, $eventName, $invoice
     return false;
 }
 
+/**
+ * Move the transaction row forward only if it is still in one of the $from states.
+ * The check and the write happen in one UPDATE, so two callbacks racing on the
+ * same invoice cannot both win. Returns true only for the callback that moved it.
+ */
+function bitpayAdvanceStatus($orderId, $invoiceId, array $from, $to)
+{
+    try {
+        $affected = Capsule::table('_bitpay_checkout_transactions')
+            ->where([
+                ['order_id', '=', $orderId],
+                ['transaction_id', '=', $invoiceId],
+            ])
+            ->whereIn('transaction_status', $from)
+            ->update(array('transaction_status' => $to, 'updated_at' => date('Y-m-d H:i:s')));
+    } catch (Exception $e) {
+        logTransaction('bitpaycheckout', $e->getMessage(), "Failed to move invoice {$invoiceId} to {$to}");
+        return false;
+    }
+
+    return $affected === 1;
+}
+
 $response = json_decode(file_get_contents("php://input"), true);
 $data = $response['data'];
 $event = isset($response['event']) && is_array($response['event']) ? $response['event'] : array();
@@ -124,30 +147,20 @@ if ($btn_id) {
                 break;
             }
 
-            $table = 'tblinvoices';
-            $update = array('status' => 'Payment Pending', 'datepaid' => date('Y-m-d H:i:s'));
-            try {
-                Capsule::table($table)
-                    ->where([
-                        ['id', '=', $orderid],
-                        ['paymentmethod', '=', 'bitpaycheckout'],
-                    ])
-                    ->update($update);
-            } catch (Exception $e) {
-                file_put_contents($file, $e, FILE_APPEND);
-            }
-
-            $table = '_bitpay_checkout_transactions';
-            $update = array('transaction_status' => 'paid', 'updated_at' => date('Y-m-d H:i:s'));
-            try {
-                Capsule::table($table)
-                    ->where([
-                        ['order_id', '=', $orderid],
-                        ['transaction_id', '=', $order_invoice],
-                    ])
-                    ->update($update);
-            } catch (Exception $e) {
-                file_put_contents($file, $e, FILE_APPEND);
+            // Only from 'new'. A late or retried paidInFull must not undo a payment
+            // that invoice_confirmed or invoice_completed already applied.
+            if (bitpayAdvanceStatus($orderid, $order_invoice, ['new'], 'paid')) {
+                try {
+                    Capsule::table('tblinvoices')
+                        ->where([
+                            ['id', '=', $orderid],
+                            ['paymentmethod', '=', 'bitpaycheckout'],
+                            ['status', '=', 'Unpaid'],
+                        ])
+                        ->update(array('status' => 'Payment Pending', 'datepaid' => date('Y-m-d H:i:s')));
+                } catch (Exception $e) {
+                    file_put_contents($file, $e, FILE_APPEND);
+                }
             }
             break;
 
@@ -157,30 +170,10 @@ if ($btn_id) {
             if (!bitpayStatusAllowed($serverStatus, $allowed, $eventName, $order_invoice, $response)) {
                 break;
             }
-            if (in_array($transaction_status, ['confirmed', 'complete'], true)) {
-                break;
-            }
 
-            $table = '_bitpay_checkout_transactions';
-            $update = array('transaction_status' => 'confirmed', 'updated_at' => date('Y-m-d H:i:s'));
-            try {
-                Capsule::table($table)
-                    ->where([
-                        ['order_id', '=', $orderid],
-                        ['transaction_id', '=', $order_invoice],
-                    ])
-                    ->update($update);
-            } catch (Exception $e) {
-                file_put_contents($file, $e, FILE_APPEND);
+            if (bitpayAdvanceStatus($orderid, $order_invoice, ['new', 'paid'], 'confirmed')) {
+                addInvoicePayment($orderid, $order_invoice, $price, 0, 'bitpaycheckout');
             }
-
-            addInvoicePayment(
-                $orderid,
-                $order_invoice,
-                $price,
-                0,
-                'bitpaycheckout'
-            );
             break;
 
         // Settled on BitPay's side. Apply the payment unless invoice_confirmed already did.
@@ -190,29 +183,12 @@ if ($btn_id) {
                 break;
             }
 
-            $alreadyApplied = in_array($transaction_status, ['confirmed', 'complete'], true);
-
-            $table = '_bitpay_checkout_transactions';
-            $update = array('transaction_status' => 'complete', 'updated_at' => date('Y-m-d H:i:s'));
-            try {
-                Capsule::table($table)
-                    ->where([
-                        ['order_id', '=', $orderid],
-                        ['transaction_id', '=', $order_invoice],
-                    ])
-                    ->update($update);
-            } catch (Exception $e) {
-                file_put_contents($file, $e, FILE_APPEND);
-            }
-
-            if (!$alreadyApplied) {
-                addInvoicePayment(
-                    $orderid,
-                    $order_invoice,
-                    $price,
-                    0,
-                    'bitpaycheckout'
-                );
+            if (bitpayAdvanceStatus($orderid, $order_invoice, ['new', 'paid'], 'complete')) {
+                // invoice_confirmed never ran for this invoice, so the payment is still ours to apply.
+                addInvoicePayment($orderid, $order_invoice, $price, 0, 'bitpaycheckout');
+            } else {
+                // Already applied by invoice_confirmed. Just record that it settled.
+                bitpayAdvanceStatus($orderid, $order_invoice, ['confirmed'], 'complete');
             }
             break;
 
