@@ -88,14 +88,6 @@ $data = $response['data'];
 $event = isset($response['event']) && is_array($response['event']) ? $response['event'] : array();
 $eventName = isset($event['name']) ? $event['name'] : '';
 
-$file = 'bitpay.txt';
-$err = 'bitpay_err.txt';
-
-file_put_contents($file, '===========INCOMING IPN=========================', FILE_APPEND);
-file_put_contents($file, date('d.m.Y H:i:s'), FILE_APPEND);
-file_put_contents($file, print_r($response, true), FILE_APPEND);
-file_put_contents($file, '===========END OF IPN===========================', FILE_APPEND);
-
 $order_status = $data['status'];
 $order_invoice = $data['id'];
 $endpoint = $gatewayParams['bitpay_checkout_endpoint'];
@@ -113,11 +105,7 @@ $hasInvoice = $invoiceStatus
     && isset($invoiceStatus->data->price);
 
 if (!$hasInvoice) {
-    file_put_contents($err, '===========IPN ERROR=========================', FILE_APPEND);
-    $msg = date('d.m.Y H:i:s') . " unable to verify invoice {$order_invoice} with BitPay\n";
-    file_put_contents($err, $msg, FILE_APPEND);
-    file_put_contents($err, print_r($response, true), FILE_APPEND);
-    file_put_contents($err, '===========END OF IPN ERROR===========================', FILE_APPEND);
+    logTransaction($gatewayModuleName, $response, "Unable to verify invoice {$order_invoice} with BitPay");
     http_response_code(400);
     exit();
 }
@@ -159,7 +147,7 @@ if ($btn_id) {
                         ])
                         ->update(array('status' => 'Payment Pending', 'datepaid' => date('Y-m-d H:i:s')));
                 } catch (Exception $e) {
-                    file_put_contents($file, $e, FILE_APPEND);
+                    logTransaction($gatewayModuleName, $e->getMessage(), 'Database update failed');
                 }
             }
             break;
@@ -205,7 +193,7 @@ if ($btn_id) {
                     ->where('transaction_id', '=', $order_invoice)
                     ->delete();
             } catch (Exception $e) {
-                file_put_contents($file, $e, FILE_APPEND);
+                logTransaction($gatewayModuleName, $e->getMessage(), 'Database update failed');
             }
             break;
 
@@ -221,7 +209,7 @@ if ($btn_id) {
                     ])
                     ->update($update);
             } catch (Exception $e) {
-                file_put_contents($file, $e, FILE_APPEND);
+                logTransaction($gatewayModuleName, $e->getMessage(), 'Database update failed');
             }
 
             $table = '_bitpay_checkout_transactions';
@@ -234,7 +222,7 @@ if ($btn_id) {
                     ])
                     ->update($update);
             } catch (Exception $e) {
-                file_put_contents($file, $e, FILE_APPEND);
+                logTransaction($gatewayModuleName, $e->getMessage(), 'Database update failed');
             }
             break;
 
