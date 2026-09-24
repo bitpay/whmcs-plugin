@@ -48,6 +48,17 @@ if (!Capsule::schema()->hasTable('_bitpay_checkout_transactions')) {
     }
 }
 
+// Earlier versions wrote raw IPN payloads to these files inside the web root
+// (4.x in bitpaycheckout/, 5.x in bitpaycheckout/callback/). Nothing reads them, so remove them.
+foreach (array('bitpaycheckout', 'bitpaycheckout/callback') as $bitpayLegacyDir) {
+    foreach (array('bitpay.txt', 'bitpay_err.txt') as $bitpayLegacyFile) {
+        $bitpayLegacyPath = __DIR__ . '/' . $bitpayLegacyDir . '/' . $bitpayLegacyFile;
+        if (is_file($bitpayLegacyPath)) {
+            @unlink($bitpayLegacyPath);
+        }
+    }
+}
+
 /**
  * Define module related meta data.
  *

@@ -25,6 +25,17 @@ $gatewayModuleName = 'bitpaycheckout';
 
 // Fetch gateway configuration parameters.
 $gatewayParams = getGatewayVariables($gatewayModuleName);
+
+// Earlier versions wrote raw IPN payloads to these files inside the web root.
+// Remove them, and leave a trace in the gateway log if that is not possible.
+foreach (array(__DIR__, dirname(__DIR__)) as $legacyDir) {
+    foreach (array('bitpay.txt', 'bitpay_err.txt') as $legacyFile) {
+        $legacyPath = $legacyDir . '/' . $legacyFile;
+        if (is_file($legacyPath) && !@unlink($legacyPath)) {
+            logTransaction($gatewayModuleName, $legacyPath, 'Could not delete old BitPay log file, please delete it');
+        }
+    }
+}
 define('TEST_URL', 'https://test.bitpay.com/invoices/');
 define('PROD_URL', 'https://bitpay.com/invoices/');
 
