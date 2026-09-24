@@ -94,7 +94,37 @@ function bitpayAdvanceStatus($orderId, $invoiceId, array $from, $to)
     return $affected === 1;
 }
 
-$response = json_decode(file_get_contents("php://input"), true);
+/**
+ * BitPay signs every webhook with an x-signature header: base64 of an HMAC-SHA256 of the
+ * raw request body, keyed with the token that created the invoice.
+ * An empty token is rejected on purpose: anyone could compute an HMAC with an empty key.
+ */
+function bitpaySignatureValid($rawBody, $signature, $token)
+{
+    if ($signature === '' || $token === '') {
+        return false;
+    }
+    $expected = base64_encode(hash_hmac('sha256', $rawBody, $token, true));
+
+    return hash_equals($expected, $signature);
+}
+
+$rawBody = file_get_contents('php://input');
+$signature = isset($_SERVER['HTTP_X_SIGNATURE']) ? trim($_SERVER['HTTP_X_SIGNATURE']) : '';
+if ($gatewayParams['bitpay_checkout_endpoint'] == 'Test') {
+    $signingToken = (string) $gatewayParams['bitpay_checkout_token_dev'];
+} else {
+    $signingToken = (string) $gatewayParams['bitpay_checkout_token_prod'];
+}
+
+if (!bitpaySignatureValid($rawBody, $signature, $signingToken)) {
+    // Do not log the body: this request did not come from BitPay.
+    logTransaction($gatewayModuleName, 'x-signature missing or invalid', 'Rejected IPN: signature check failed');
+    http_response_code(401);
+    exit();
+}
+
+$response = json_decode($rawBody, true);
 $data = $response['data'];
 $event = isset($response['event']) && is_array($response['event']) ? $response['event'] : array();
 $eventName = isset($event['name']) ? $event['name'] : '';
