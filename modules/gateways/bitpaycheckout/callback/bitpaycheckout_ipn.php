@@ -1,7 +1,7 @@
 <?php
 
 /**
- * BitPay Checkout IPN 5.1.0
+ * BitPay Checkout IPN 5.1.2
  *
  * This file verifies that the payment gateway module is active,
  * validates an Invoice ID, checks for the existence of a Transaction ID,

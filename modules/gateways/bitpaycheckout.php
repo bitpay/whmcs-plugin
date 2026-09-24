@@ -1,6 +1,6 @@
 <?php
 /**
- * BitPay Checkout 5.1.0
+ * BitPay Checkout 5.1.2
  *
  * Within the module itself, all functions must be prefixed with the module
  * filename, followed by an underscore, and then the function name. For this
@@ -160,7 +160,7 @@ function bitpaycheckout_link($config_params)
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
 
     <?php
-    $platformInfo = 'BitPay_WHCMS_v5.1.0';
+    $platformInfo = 'BitPay_WHCMS_v5.1.2';
     $client = new PosClient($bitpay_checkout_token, $bitpay_checkout_endpoint, $platformInfo);
 
     // Check to make sure we don't already have a valid BitPay Invoice active
