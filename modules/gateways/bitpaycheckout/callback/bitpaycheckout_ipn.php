@@ -1,7 +1,7 @@
 <?php
 
 /**
- * BitPay Checkout IPN 5.1.0
+ * BitPay Checkout IPN 5.1.2
  *
  * This file verifies that the payment gateway module is active,
  * validates an Invoice ID, checks for the existence of a Transaction ID,
@@ -25,6 +25,17 @@ $gatewayModuleName = 'bitpaycheckout';
 
 // Fetch gateway configuration parameters.
 $gatewayParams = getGatewayVariables($gatewayModuleName);
+
+// Earlier versions wrote raw IPN payloads to these files inside the web root.
+// Remove them, and leave a trace in the gateway log if that is not possible.
+foreach (array(__DIR__, dirname(__DIR__)) as $legacyDir) {
+    foreach (array('bitpay.txt', 'bitpay_err.txt') as $legacyFile) {
+        $legacyPath = $legacyDir . '/' . $legacyFile;
+        if (is_file($legacyPath) && !@unlink($legacyPath)) {
+            logTransaction($gatewayModuleName, $legacyPath, 'Could not delete old BitPay log file, please delete it');
+        }
+    }
+}
 define('TEST_URL', 'https://test.bitpay.com/invoices/');
 define('PROD_URL', 'https://bitpay.com/invoices/');
 
@@ -83,18 +94,40 @@ function bitpayAdvanceStatus($orderId, $invoiceId, array $from, $to)
     return $affected === 1;
 }
 
-$response = json_decode(file_get_contents("php://input"), true);
+/**
+ * BitPay signs every webhook with an x-signature header: base64 of an HMAC-SHA256 of the
+ * raw request body, keyed with the token that created the invoice.
+ * An empty token is rejected on purpose: anyone could compute an HMAC with an empty key.
+ */
+function bitpaySignatureValid($rawBody, $signature, $token)
+{
+    if ($signature === '' || $token === '') {
+        return false;
+    }
+    $expected = base64_encode(hash_hmac('sha256', $rawBody, $token, true));
+
+    return hash_equals($expected, $signature);
+}
+
+$rawBody = file_get_contents('php://input');
+$signature = isset($_SERVER['HTTP_X_SIGNATURE']) ? trim($_SERVER['HTTP_X_SIGNATURE']) : '';
+if ($gatewayParams['bitpay_checkout_endpoint'] == 'Test') {
+    $signingToken = (string) $gatewayParams['bitpay_checkout_token_dev'];
+} else {
+    $signingToken = (string) $gatewayParams['bitpay_checkout_token_prod'];
+}
+
+if (!bitpaySignatureValid($rawBody, $signature, $signingToken)) {
+    // Do not log the body: this request did not come from BitPay.
+    logTransaction($gatewayModuleName, 'x-signature missing or invalid', 'Rejected IPN: signature check failed');
+    http_response_code(401);
+    exit();
+}
+
+$response = json_decode($rawBody, true);
 $data = $response['data'];
 $event = isset($response['event']) && is_array($response['event']) ? $response['event'] : array();
 $eventName = isset($event['name']) ? $event['name'] : '';
-
-$file = 'bitpay.txt';
-$err = 'bitpay_err.txt';
-
-file_put_contents($file, '===========INCOMING IPN=========================', FILE_APPEND);
-file_put_contents($file, date('d.m.Y H:i:s'), FILE_APPEND);
-file_put_contents($file, print_r($response, true), FILE_APPEND);
-file_put_contents($file, '===========END OF IPN===========================', FILE_APPEND);
 
 $order_status = $data['status'];
 $order_invoice = $data['id'];
@@ -113,11 +146,7 @@ $hasInvoice = $invoiceStatus
     && isset($invoiceStatus->data->price);
 
 if (!$hasInvoice) {
-    file_put_contents($err, '===========IPN ERROR=========================', FILE_APPEND);
-    $msg = date('d.m.Y H:i:s') . " unable to verify invoice {$order_invoice} with BitPay\n";
-    file_put_contents($err, $msg, FILE_APPEND);
-    file_put_contents($err, print_r($response, true), FILE_APPEND);
-    file_put_contents($err, '===========END OF IPN ERROR===========================', FILE_APPEND);
+    logTransaction($gatewayModuleName, $response, "Unable to verify invoice {$order_invoice} with BitPay");
     http_response_code(400);
     exit();
 }
@@ -159,7 +188,7 @@ if ($btn_id) {
                         ])
                         ->update(array('status' => 'Payment Pending', 'datepaid' => date('Y-m-d H:i:s')));
                 } catch (Exception $e) {
-                    file_put_contents($file, $e, FILE_APPEND);
+                    logTransaction($gatewayModuleName, $e->getMessage(), 'Database update failed');
                 }
             }
             break;
@@ -205,7 +234,7 @@ if ($btn_id) {
                     ->where('transaction_id', '=', $order_invoice)
                     ->delete();
             } catch (Exception $e) {
-                file_put_contents($file, $e, FILE_APPEND);
+                logTransaction($gatewayModuleName, $e->getMessage(), 'Database update failed');
             }
             break;
 
@@ -221,7 +250,7 @@ if ($btn_id) {
                     ])
                     ->update($update);
             } catch (Exception $e) {
-                file_put_contents($file, $e, FILE_APPEND);
+                logTransaction($gatewayModuleName, $e->getMessage(), 'Database update failed');
             }
 
             $table = '_bitpay_checkout_transactions';
@@ -234,7 +263,7 @@ if ($btn_id) {
                     ])
                     ->update($update);
             } catch (Exception $e) {
-                file_put_contents($file, $e, FILE_APPEND);
+                logTransaction($gatewayModuleName, $e->getMessage(), 'Database update failed');
             }
             break;
 
